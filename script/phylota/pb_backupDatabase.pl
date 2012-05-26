@@ -1,20 +1,22 @@
 #!/usr/bin/perl
-
+use strict;
+use Getopt::Long;
 # Uses mysqldump to obtain a backup of the pb database suitable for recovery elsewhere
 
-$fnprefix = "pb.bu.rel";
-while ($fl = shift @ARGV)
-  {
-  $par = shift @ARGV;
-  if ($fl =~ /-release/) {$release = $par;}
-  }
+my $fnprefix = "pb.bu.rel";
+my $release;
+GetOptions(
+	'release=s'  => \$release,
+	'fnprefix=s' => \$fnprefix,
+);
+
 die "Must specify release number\n" if (!$release);
-($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
-$month=$mon+1;
+my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
+my $month=$mon+1;
 $year+=1900;
-$filename = "$fnprefix$release.$month.$mday.$year";
+my $filename = "$fnprefix$release.$month.$mday.$year";
  
-$s = "mysqldump -pphylota phylota clusters_$release ci_gi_$release nodes_$release summary_stats seqs > $filename";
+my $s = "mysqldump -pphylota phylota clusters_$release ci_gi_$release nodes_$release summary_stats seqs > $filename";
 print "$s ... \n";
 system $s;
 

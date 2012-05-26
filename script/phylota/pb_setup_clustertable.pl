@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 
 # Uses a nasty MySQL query of the nodes and clusters_subtrees tables to setup the cluster_table
 # which has summary stats on every cluster
@@ -6,29 +6,29 @@
 
 use DBI;
 use pb;
+use warnings;
+use strict;
+use Getopt::Long;
 
-while ($fl = shift @ARGV)
-  {
-  $par = shift @ARGV;
-  if ($fl =~ /-c/) {$configFile = $par;}
-  }
-die "Specify configuration file\n" if (!$configFile);
+# process command line arguments
+my $configFile;
+GetOptions(
+	'config=s' => \$configFile,
+);
 
+my %pbH = %{ pb::parseConfig($configFile) };
+my $release = pb::currentGBRelease();
 
-
-%pbH=%{pb::parseConfig($configFile)};
-$release=pb::currentGBRelease();
-
-$seqsTable = "seqs";
-$clusterTable="clusters_$release";
-$cigiTable="ci_gi_$release";
-$nodeTable="nodes_$release";
+my $seqsTable = "seqs";
+my $clusterTable = "clusters_$release";
+my $cigiTable = "ci_gi_$release";
+my $nodeTable = "nodes_$release";
 
 # ******************************
 
 my $dbh = DBI->connect("DBI:mysql:database=$pbH{MYSQL_DATABASE};host=$pbH{MYSQL_HOST}",$pbH{MYSQL_USER},$pbH{MYSQL_PASSWD});
 
-$s="drop table if exists $clusterTable";
+my $s = "drop table if exists $clusterTable";
 $dbh->do("$s");
 $s="create table if not exists $clusterTable(
 		ti_root INT UNSIGNED,
@@ -71,32 +71,31 @@ $dbh->do("$s");
 # Now populate the seed gi
 
 print "Adding seed gi values...\n";
-$count=1;
+my $count = 1;
 
 
 # following query delivers one gi for the group of gis formed by every combination of ti x clustid
-$sql = "select ti_root, ci,cl_type from $clusterTable";
-$sh = $dbh->prepare($sql);
+my $sql = "select ti_root, ci,cl_type from $clusterTable";
+my $sh = $dbh->prepare($sql);
 $sh->execute;
-while ($H = $sh->fetchrow_hashref)  
-	{
-	$ti=$H->{ti_root};
-	$clustid=$H->{ci};
-	$cl_type=$H->{cl_type};
+while ( my $H = $sh->fetchrow_hashref )  {
+	my $ti      = $H->{ti_root};
+	my $clustid = $H->{ci};
+	my $cl_type = $H->{cl_type};
 
-	$sqls = "select $seqsTable.gi from $seqsTable,$cigiTable where $cigiTable.ti=$ti and $cigiTable.clustid=$clustid and $seqsTable.gi=$cigiTable.gi order by length desc limit 1";
-
-	$shs = $dbh->prepare($sqls);
+	my $sqls = "select $seqsTable.gi from $seqsTable,$cigiTable where $cigiTable.ti=$ti and $cigiTable.clustid=$clustid and $seqsTable.gi=$cigiTable.gi order by length desc limit 1";
+	my $shs = $dbh->prepare($sqls);
 	$shs->execute;
-	while ($Hs = $shs->fetchrow_hashref)  # only returns one row (presumably) here and next...
-			{
-			$gi=$Hs->{gi};
-			$s="update $clusterTable set seed_gi=$gi where ti_root=$ti and ci=$clustid and cl_type=\'$cl_type\'";
-			print "$count seed_gi updates done\n" if ($count/10000 == int($count/10000)); $count++;
-			$dbh->do($s);
-			}
-	$shs->finish;
+	
+	# only returns one row (presumably) here and next...
+	while (my $Hs = $shs->fetchrow_hashref)  {
+		my $gi = $Hs->{gi};
+		$s="update $clusterTable set seed_gi=$gi where ti_root=$ti and ci=$clustid and cl_type=\'$cl_type\'";
+		print "$count seed_gi updates done\n" if ($count/10000 == int($count/10000)); $count++;
+		$dbh->do($s);
 	}
+	$shs->finish;
+}
 $sh->finish;
 
 
@@ -148,37 +147,35 @@ $sh->finish;
 
 print "Finding parent clusters...\n";
 
-$count=1;
+$count = 1;
 
 $sql = "select ti, ti_anc, model,ci,cl_type,seed_gi from $nodeTable,$clusterTable where $nodeTable.ti=$clusterTable.ti_root;";
 $sh = $dbh->prepare($sql);
 $sh->execute;
-while ($H = $sh->fetchrow_hashref)  
-	{
-	$model=$H->{model};
-	$cl_type=$H->{cl_type};
+while ( my $H = $sh->fetchrow_hashref ) {
+	my $model   = $H->{model};
+	my $cl_type = $H->{cl_type};
 	next if ($cl_type eq 'node'  &&  $model);  # skip the node clusters of model organisms; they don't have parent clusters (well, not at this stage of the pipeline...
 
-
-
-	$ti_anc=$H->{ti_anc};
-	$ti=$H->{ti};
-	$seed_gi=$H->{seed_gi};
-	$ci=$H->{ci};
+	my $ti_anc  = $H->{ti_anc};
+	my $ti      = $H->{ti};
+	my $seed_gi = $H->{seed_gi};
+	my $ci      = $H->{ci};
 
 	# notice here to get the ancestor, we'll want to look in the subtree clusters always
-	$sqls = "select clustid from $cigiTable where ti=$ti_anc and cl_type=\'subtree\' and gi=$seed_gi";
-	$shs = $dbh->prepare($sqls);
+	my $sqls = "select clustid from $cigiTable where ti=$ti_anc and cl_type=\'subtree\' and gi=$seed_gi";
+	my $shs = $dbh->prepare($sqls);
 	$shs->execute;
-	while ($Hs = $shs->fetchrow_hashref)  # only returns one row (presumably) here and next...
-			{
-			$ci_anc=$Hs->{clustid};
-			$s="update $clusterTable set ci_anc=$ci_anc where ti_root=$ti and ci=$ci and cl_type=\'$cl_type\'";
-			print "$count parent cluster updates done\n" if ($count/10000 == int($count/10000)); $count++;
-			$dbh->do($s);
-			}
-	$shs->finish;
+	
+	# only returns one row (presumably) here and next...
+	while (my $Hs = $shs->fetchrow_hashref) {
+		my $ci_anc = $Hs->{clustid};
+		$s="update $clusterTable set ci_anc=$ci_anc where ti_root=$ti and ci=$ci and cl_type=\'$cl_type\'";
+		print "$count parent cluster updates done\n" if ($count/10000 == int($count/10000)); $count++;
+		$dbh->do($s);
 	}
+	$shs->finish;
+}
 $sh->finish;
 
 $count=0;
@@ -186,17 +183,15 @@ print "Updating node table with cluster numbers...\n";
 update ("n_clust_node", "select ti_root,count(*) as n from $clusterTable where cl_type='node' group by ti_root");
 update ("n_clust_sub", "select ti_root,count(*) as n from $clusterTable where cl_type='subtree' group by ti_root");
 update ("n_PIclust_sub", "select ti_root,count(*) as n from $clusterTable where cl_type='subtree' and PI=1 group by ti_root");
-sub update
-{
-my ($field,$sql)=@_;
-$sh = $dbh->prepare($sql);
-$sh->execute;
-while ($H = $sh->fetchrow_hashref)  
-	{
-	$ti=$H->{ti_root};
-	$n=$H->{n};
-	$s="update $nodeTable set $field=$n where ti=$ti";
-	print "$count updates done\n" if ($count/10000 == int($count/10000)); $count++;
-	$dbh->do($s);
+sub update {
+	my ( $field,$sql ) = @_;
+	$sh = $dbh->prepare($sql);
+	$sh->execute;
+	while ( my $H = $sh->fetchrow_hashref ) {
+		my $ti = $H->{ti_root};
+		my $n  = $H->{n};
+		$s="update $nodeTable set $field=$n where ti=$ti";
+		print "$count updates done\n" if ($count/10000 == int($count/10000)); $count++;
+		$dbh->do($s);
 	}
 }

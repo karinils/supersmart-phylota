@@ -8,17 +8,20 @@
 
 use DBI;
 use pb;
+use Getopt::Long;
+use strict;
 
-while ($fl = shift @ARGV)
-  {
-  $par = shift @ARGV;
-  if ($fl =~ /-c/) {$configFile = $par;}
-  if ($fl =~ /-f/) {$filename = $par;}
-  }
-%pbH=%{pb::parseConfig($configFile)};
-$release=pb::currentGBRelease();
+# process command line arguments
+my ( $configFile, $filename );
+GetOptions(
+	'config=s' => \$configFile,
+	'file=s'   => \$filename,
+);
 
-$ci_gi_table="ci_gi_$release";
+# parse config file
+my %pbH = %{ pb::parseConfig($configFile) };
+my $release = pb::currentGBRelease();
+my $ci_gi_table = "ci_gi_$release";
 
 my $dbh = DBI->connect("DBI:mysql:database=$pbH{MYSQL_DATABASE};host=$pbH{MYSQL_HOST}",$pbH{MYSQL_USER},$pbH{MYSQL_PASSWD});
 
@@ -28,11 +31,10 @@ my $dbh = DBI->connect("DBI:mysql:database=$pbH{MYSQL_DATABASE};host=$pbH{MYSQL_
 # gi ... the sequence id
 # ti_of_gi ... the ti of that sequence
 
-$sql= "drop table if exists $ci_gi_table";
+my $sql = "drop table if exists $ci_gi_table";
 $dbh->do("$sql");
 
-
-$sql=	"create table if not exists $ci_gi_table(
+$sql = "create table if not exists $ci_gi_table(
 	ti INT UNSIGNED,
 	clustid INT UNSIGNED,
 	cl_type ENUM('node','subtree'),
@@ -45,7 +47,9 @@ $sql=	"create table if not exists $ci_gi_table(
 	)";
 $dbh->do("$sql");
 
-# The local keyword seems to be important for some mysql configs.
-$sql= "load data local infile \'$filename\' into table $ci_gi_table";
-$dbh->do("$sql");
+if ( $filename ) {
+	# The local keyword seems to be important for some mysql configs.
+	$sql= "load data local infile \'$filename\' into table $ci_gi_table";
+	$dbh->do("$sql");
+}
 
