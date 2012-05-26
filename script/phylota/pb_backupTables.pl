@@ -1,29 +1,30 @@
 #!/usr/bin/perl -w
 
 # WARNING! REMOVES EXISTING BACKUPS!
-
+use strict;
+use Getopt::Long;
 use DBI;
-
-while ($fl = shift @ARGV)
-  {
-  $par = shift @ARGV;
-  if ($fl =~ /-release/) {$release = $par;}
-  if ($fl =~ /-v/) {$verify = $par;}
-  }
-
-die ("must verify to run this: look at the code, stupid") if (!$verify  || $verify ne "yes");
-die ("must specify release number") if (!$release);
 
 # ************************************************************
 # mysql initializations 
 
-$database="phylota";
-$host="localhost";
-$user="sanderm";
-$passwd="phylota"; # password for the database
+my $database="phylota";
+my $host="localhost";
+my $user="sanderm";
+my $passwd="phylota"; # password for the database
+
+my ( $release, $verify );
+GetOptions(
+	'release=s' => \$release,
+	'verify=s'  => \$verify,
+	'user=s'    => \$user,
+	'passwd=s'  => $passwd,
+);
+
+die ("must verify to run this: look at the code, stupid") if (!$verify  || $verify ne "yes");
+die ("must specify release number") if (!$release);
 
 my $dbh = DBI->connect("DBI:mysql:database=$database;host=$host",$user,$passwd);
-
 
 $dbh->do ("drop table if exists nodes_$release\_bak"); 
 $dbh->do ("drop table if exists clusters_$release\_bak"); 

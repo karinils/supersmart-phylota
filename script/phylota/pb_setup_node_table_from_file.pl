@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 
 #CAREFUL: OVERWRITES EXISTING TABLE
 #USAGE: ... -c phylota_configuration_file -f clustertable_filename
@@ -7,23 +7,25 @@
 
 use DBI;
 use pb;
+use strict;
+use warnings;
 
-while ($fl = shift @ARGV)
-  {
-  $par = shift @ARGV;
-  if ($fl =~ /-c/) {$configFile = $par;}
-  if ($fl =~ /-f/) {$filename = $par;}
-  }
-%pbH=%{pb::parseConfig($configFile)};
-$release=pb::currentGBRelease();
+# process command line arguments
+my ( $configFile, $filename );
+GetOptions(
+	'config=s' => \$configFile,
+	'file=s'   => \$filename,
+);
 
-$nodeTable="nodes_$release";
+my %pbH = %{ pb::parseConfig($configFile) };
+my $release = pb::currentGBRelease();
+my $nodeTable = "nodes_$release";
 
 my $dbh = DBI->connect("DBI:mysql:database=$pbH{MYSQL_DATABASE};host=$pbH{MYSQL_HOST}",$pbH{MYSQL_USER},$pbH{MYSQL_PASSWD});
 
-$sql="drop table if exists $nodeTable";
+my $sql = "drop table if exists $nodeTable";
 $dbh->do("$sql");
-$sql="create table if not exists $nodeTable(
+$sql = "create table if not exists $nodeTable(
                 ti INT UNSIGNED primary key,
                 ti_anc INT UNSIGNED, 
                 INDEX(ti_anc), 
@@ -48,7 +50,9 @@ $sql="create table if not exists $nodeTable(
 
 $dbh->do("$sql");
 
-# The local keyword seems to be important for some mysql configs.
-$sql= "load data local infile \'$filename\' into table $nodeTable";
-$dbh->do("$sql");
+if ( $filename ) {
+	# The local keyword seems to be important for some mysql configs.
+	$sql = "load data local infile \'$filename\' into table $nodeTable";
+	$dbh->do("$sql");
+}
 
