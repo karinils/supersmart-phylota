@@ -10,6 +10,7 @@ WriteMakefile(
 		'Pod::Usage'   => 0,
 		'Bio::Phylo'   => 0,
 		'Template'     => 0,
+		'Config::Tiny' => 0,
 	}
 );
 

@@ -58,3 +58,22 @@ create table if not exists clusters(
 	strict_res FLOAT,
 	ortho TINYINT 		# 1 = orthologous cluster
 );
+
+drop table if summary_stats;
+create table if not exists summary_stats (
+	gb_release INT UNSIGNED,
+	gb_rel_date VARCHAR(25),
+	n_gis INT UNSIGNED,
+	n_nodes INT UNSIGNED,
+	n_nodes_term INT UNSIGNED,
+	n_clusts_node INT UNSIGNED,
+	n_clusts_sub  INT UNSIGNED,
+	n_nodes_with_sequence  INT UNSIGNED,
+	n_clusts INT UNSIGNED,
+	n_PI_clusts INT UNSIGNED,
+	n_singleton_clusts INT UNSIGNED,
+	n_large_gi_clusts INT UNSIGNED,
+	n_large_ti_clusts INT UNSIGNED,
+	n_largest_gi_clust INT UNSIGNED,
+	n_largest_ti_clust INT UNSIGNED
+);
