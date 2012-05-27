@@ -16,4 +16,15 @@ __PACKAGE__->load_namespaces;
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration
+use Bio::Phylo::PhyLoTA::Config;
+my $SINGLETON;
+sub new {
+	if ( not $SINGLETON ) {
+		my $class = shift;
+		my $c = Bio::Phylo::PhyLoTA::Config->new;
+		my $dsn = sprintf 'DBI:%s:database=%s;host=%s', $c->RDBMS, $c->DATABASE, $c->HOST;
+		$SINGLETON = $class->connect( $dsn, $c->USER, $c->PASS );
+	}
+	return $SINGLETON;
+}
 1;
