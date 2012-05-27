@@ -16,7 +16,7 @@ create table if not exists nodes(
     ti INT UNSIGNED primary key,
     ti_anc INT UNSIGNED, 
     INDEX(ti_anc), 
-    terminal_flag BOOL, # if '1', node is a tip
+    terminal_flag BOOL, -- if '1', node is a tip
     rank_flag BOOL, 
     model BOOL,
     taxon_name VARCHAR(128),
@@ -42,7 +42,7 @@ create table if not exists clusters(
 	INDEX(ti_root,ci,cl_type), 
 	n_gi INT UNSIGNED, 
 	n_ti INT UNSIGNED, 
-	PI BOOL,		# if its phylogenically informative
+	PI BOOL,		-- if its phylogenically informative
 	MinLength INT UNSIGNED,
 	MaxLength INT UNSIGNED,
 	MaxAlignDens FLOAT,
@@ -56,16 +56,16 @@ create table if not exists clusters(
 	clustalw_res FLOAT,
 	muscle_res FLOAT,
 	strict_res FLOAT,
-	ortho TINYINT 		# 1 = orthologous cluster
+	ortho TINYINT 		-- 1 = orthologous cluster
 );
 
 drop table if summary_stats;
 create table if not exists summary_stats (
-	gb_release INT UNSIGNED,    # genbank release number
-	gb_rel_date VARCHAR(25),    # genbank release date
-	n_gis INT UNSIGNED,         # number of GIs in seq table
-	n_nodes INT UNSIGNED,       # number of node in nodes table
-	n_nodes_term INT UNSIGNED,  # number of tips in nodes table
+	gb_release INT UNSIGNED,    -- genbank release number
+	gb_rel_date VARCHAR(25),    -- genbank release date
+	n_gis INT UNSIGNED,         -- number of GIs in seq table
+	n_nodes INT UNSIGNED,       -- number of node in nodes table
+	n_nodes_term INT UNSIGNED,  -- number of tips in nodes table
 	n_clusts_node INT UNSIGNED,
 	n_clusts_sub  INT UNSIGNED,
 	n_nodes_with_sequence  INT UNSIGNED,
