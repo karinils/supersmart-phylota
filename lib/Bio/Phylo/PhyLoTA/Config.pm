@@ -17,7 +17,7 @@ sub new {
 
 sub read {
     my $self = shift;
-    my $file = shift || "$ENV{PHYLOTA_ROOT}/conf/phylota.ini";
+    my $file = shift || "$ENV{PHYLOTA_HOME}/conf/phylota.ini";
     my $conf = Config::Tiny->read($file);
     if ( my $error = Config::Tiny->errstr ) {
         die $error;
