@@ -1,20 +1,12 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Bio::Phylo::PhyLoTA::DBH;
+use Bio::Phylo::PhyLoTA::Config;
 
-
-use DBI;
-
-$release="168";
-
-# ************************************************************
-# mysql initializations 
-
-$database="phylota";
-$host="localhost";
-$user="sanderm";
-$passwd="phylota"; # password for the database
-
-my $dbh = DBI->connect("DBI:mysql:database=$database;host=$host",$user,$passwd);
-
+my $config  = Bio::Phylo::PhyLoTA::Config->new;
+my $release = $config->currentGBRelease;
+my $dbh = Bio::Phylo::PhyLoTA::DBH->new;
 
 $dbh->do ("drop table if exists nodes_$release"); 
 $dbh->do ("drop table if exists clusters_$release"); 
