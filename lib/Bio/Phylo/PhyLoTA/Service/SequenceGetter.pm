@@ -1,4 +1,4 @@
-package Bio::Phylo::PhyLoTA::Service::CalibrationTableCreator;
+package Bio::Phylo::PhyLoTA::Service::SequenceGetter;
 use strict;
 use warnings;
 

@@ -1,4 +1,4 @@
-package Bio::Phylo::PhyLoTA::Service::CalibrationTableCreator;
+package Bio::Phylo::PhyLoTA::Service::FossilDataGetter;
 use strict;
 use warnings;
 
