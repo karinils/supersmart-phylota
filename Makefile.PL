@@ -31,8 +31,8 @@ sub MY::postamble {
 	};
 	if ( $@ ) {
 		warn "*** Couldn't create extended Makefile.\n",
-			 "*** Re-run $0 after resolving missing dependencies.\n",
-			 "*** The error message we got was:\n $@";
+		     "*** Re-run $0 after resolving missing dependencies.\n",
+		     "*** The error message we got was:\n $@";
 		return undef;
 	}
 	else {
