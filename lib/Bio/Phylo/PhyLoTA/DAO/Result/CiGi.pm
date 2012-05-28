@@ -23,14 +23,12 @@ __PACKAGE__->table("ci_gi");
 
   data_type: 'integer'
   extra: {unsigned => 1}
-  is_foreign_key: 1
   is_nullable: 1
 
 =head2 clustid
 
   data_type: 'integer'
   extra: {unsigned => 1}
-  is_foreign_key: 1
   is_nullable: 1
 
 =head2 cl_type
@@ -43,7 +41,6 @@ __PACKAGE__->table("ci_gi");
 
   data_type: 'bigint'
   extra: {unsigned => 1}
-  is_foreign_key: 1
   is_nullable: 1
 
 =head2 ti_of_gi
@@ -56,19 +53,9 @@ __PACKAGE__->table("ci_gi");
 
 __PACKAGE__->add_columns(
   "ti",
-  {
-    data_type => "integer",
-    extra => { unsigned => 1 },
-    is_foreign_key => 1,
-    is_nullable => 1,
-  },
+  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
   "clustid",
-  {
-    data_type => "integer",
-    extra => { unsigned => 1 },
-    is_foreign_key => 1,
-    is_nullable => 1,
-  },
+  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
   "cl_type",
   {
     data_type => "enum",
@@ -76,82 +63,25 @@ __PACKAGE__->add_columns(
     is_nullable => 1,
   },
   "gi",
-  {
-    data_type => "bigint",
-    extra => { unsigned => 1 },
-    is_foreign_key => 1,
-    is_nullable => 1,
-  },
+  { data_type => "bigint", extra => { unsigned => 1 }, is_nullable => 1 },
   "ti_of_gi",
   { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
 );
 
-=head1 RELATIONS
 
-=head2 ti
-
-Type: belongs_to
-
-Related object: L<Bio::Phylo::PhyLoTA::DAO::Result::Node>
-
-=cut
-
-__PACKAGE__->belongs_to(
-  "ti",
-  "Bio::Phylo::PhyLoTA::DAO::Result::Node",
-  { ti => "ti" },
-  {
-    is_deferrable => 1,
-    join_type     => "LEFT",
-    on_delete     => "CASCADE",
-    on_update     => "CASCADE",
-  },
-);
-
-=head2 clustid
-
-Type: belongs_to
-
-Related object: L<Bio::Phylo::PhyLoTA::DAO::Result::Cluster>
-
-=cut
-
-__PACKAGE__->belongs_to(
-  "clustid",
-  "Bio::Phylo::PhyLoTA::DAO::Result::Cluster",
-  { ci => "clustid" },
-  {
-    is_deferrable => 1,
-    join_type     => "LEFT",
-    on_delete     => "CASCADE",
-    on_update     => "CASCADE",
-  },
-);
-
-=head2 gi
-
-Type: belongs_to
-
-Related object: L<Bio::Phylo::PhyLoTA::DAO::Result::Seq>
-
-=cut
-
-__PACKAGE__->belongs_to(
-  "gi",
-  "Bio::Phylo::PhyLoTA::DAO::Result::Seq",
-  { gi => "gi" },
-  {
-    is_deferrable => 1,
-    join_type     => "LEFT",
-    on_delete     => "CASCADE",
-    on_update     => "CASCADE",
-  },
-);
-
-
-# Created by DBIx::Class::Schema::Loader v0.07002 @ 2012-05-28 21:25:21
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:X6dH5ItvJTDYLq1h0ll7PQ
+# Created by DBIx::Class::Schema::Loader v0.07002 @ 2012-05-29 00:13:17
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:loJ84EFGQDeIWN/b/PoM8w
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration
+use Bio::Phylo::PhyLoTA::Config;
+my $config = Bio::Phylo::PhyLoTA::Config->new;
+sub table {
+	my $class = shift;
+	my $table = shift;
+	my $release = $config->currentGBRelease;
+	$class->SUPER::table( $table . '_' . $release );
+}
+
+
 1;

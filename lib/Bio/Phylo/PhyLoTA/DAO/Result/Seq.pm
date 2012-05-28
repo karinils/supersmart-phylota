@@ -22,19 +22,31 @@ __PACKAGE__->table("seqs");
 =head2 gi
 
   data_type: 'bigint'
+  default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
 
 =head2 ti
 
-  data_type: 'integer'
+  data_type: 'bigint'
   extra: {unsigned => 1}
-  is_foreign_key: 1
+  is_nullable: 1
+
+=head2 acc
+
+  data_type: 'varchar'
+  is_nullable: 1
+  size: 12
+
+=head2 acc_vers
+
+  data_type: 'smallint'
+  extra: {unsigned => 1}
   is_nullable: 1
 
 =head2 length
 
-  data_type: 'integer'
+  data_type: 'bigint'
   extra: {unsigned => 1}
   is_nullable: 1
 
@@ -42,105 +54,63 @@ __PACKAGE__->table("seqs");
 
   data_type: 'varchar'
   is_nullable: 1
-  size: 128
+  size: 5
 
-=head2 gb_rel_date
+=head2 acc_date
 
-  data_type: 'varchar'
+  data_type: 'date'
   is_nullable: 1
-  size: 25
 
-=head2 gb_release
+=head2 gbrel
 
-  data_type: 'integer'
+  data_type: 'smallint'
   extra: {unsigned => 1}
   is_nullable: 1
 
-=head2 mol_type
-
-  data_type: 'varchar'
-  is_nullable: 1
-  size: 25
-
 =head2 def
 
-  data_type: 'longtext'
+  data_type: 'text'
   is_nullable: 1
 
 =head2 seq
 
-  data_type: 'longtext'
+  data_type: 'mediumtext'
   is_nullable: 1
 
 =cut
 
 __PACKAGE__->add_columns(
   "gi",
-  { data_type => "bigint", extra => { unsigned => 1 }, is_nullable => 0 },
-  "ti",
   {
-    data_type => "integer",
+    data_type => "bigint",
+    default_value => 0,
     extra => { unsigned => 1 },
-    is_foreign_key => 1,
-    is_nullable => 1,
+    is_nullable => 0,
   },
+  "ti",
+  { data_type => "bigint", extra => { unsigned => 1 }, is_nullable => 1 },
+  "acc",
+  { data_type => "varchar", is_nullable => 1, size => 12 },
+  "acc_vers",
+  { data_type => "smallint", extra => { unsigned => 1 }, is_nullable => 1 },
   "length",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
+  { data_type => "bigint", extra => { unsigned => 1 }, is_nullable => 1 },
   "division",
-  { data_type => "varchar", is_nullable => 1, size => 128 },
-  "gb_rel_date",
-  { data_type => "varchar", is_nullable => 1, size => 25 },
-  "gb_release",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
-  "mol_type",
-  { data_type => "varchar", is_nullable => 1, size => 25 },
+  { data_type => "varchar", is_nullable => 1, size => 5 },
+  "acc_date",
+  { data_type => "date", is_nullable => 1 },
+  "gbrel",
+  { data_type => "smallint", extra => { unsigned => 1 }, is_nullable => 1 },
   "def",
-  { data_type => "longtext", is_nullable => 1 },
+  { data_type => "text", is_nullable => 1 },
   "seq",
-  { data_type => "longtext", is_nullable => 1 },
+  { data_type => "mediumtext", is_nullable => 1 },
 );
 __PACKAGE__->set_primary_key("gi");
 
-=head1 RELATIONS
 
-=head2 ci_gis
-
-Type: has_many
-
-Related object: L<Bio::Phylo::PhyLoTA::DAO::Result::CiGi>
-
-=cut
-
-__PACKAGE__->has_many(
-  "ci_gis",
-  "Bio::Phylo::PhyLoTA::DAO::Result::CiGi",
-  { "foreign.gi" => "self.gi" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
-=head2 ti
-
-Type: belongs_to
-
-Related object: L<Bio::Phylo::PhyLoTA::DAO::Result::Node>
-
-=cut
-
-__PACKAGE__->belongs_to(
-  "ti",
-  "Bio::Phylo::PhyLoTA::DAO::Result::Node",
-  { ti => "ti" },
-  {
-    is_deferrable => 1,
-    join_type     => "LEFT",
-    on_delete     => "CASCADE",
-    on_update     => "CASCADE",
-  },
-);
-
-
-# Created by DBIx::Class::Schema::Loader v0.07002 @ 2012-05-28 21:25:21
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:k0mTNJNK+TSvBmDhApKVKw
+# Created by DBIx::Class::Schema::Loader v0.07002 @ 2012-05-29 00:09:56
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:KMVaLLKni4EKqpT1DqTR6w
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration

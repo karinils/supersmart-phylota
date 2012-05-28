@@ -202,21 +202,6 @@ __PACKAGE__->set_primary_key("ci");
 
 =head1 RELATIONS
 
-=head2 ci_gis
-
-Type: has_many
-
-Related object: L<Bio::Phylo::PhyLoTA::DAO::Result::CiGi>
-
-=cut
-
-__PACKAGE__->has_many(
-  "ci_gis",
-  "Bio::Phylo::PhyLoTA::DAO::Result::CiGi",
-  { "foreign.clustid" => "self.ci" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
 =head2 ti_root
 
 Type: belongs_to
@@ -238,9 +223,18 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07002 @ 2012-05-28 21:25:21
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:LsJJxg6ILDDDk6t8yzdzog
+# Created by DBIx::Class::Schema::Loader v0.07002 @ 2012-05-29 00:13:17
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:oTSbdQg+uqkhbQlCiDai+Q
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration
+use Bio::Phylo::PhyLoTA::Config;
+my $config = Bio::Phylo::PhyLoTA::Config->new;
+sub table {
+	my $class = shift;
+	my $table = shift;
+	my $release = $config->currentGBRelease;
+	$class->SUPER::table( $table . '_' . $release );
+}
+
 1;
