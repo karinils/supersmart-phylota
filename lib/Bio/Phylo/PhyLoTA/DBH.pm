@@ -3,9 +3,11 @@ use strict;
 use warnings;
 use DBI;
 use Bio::Phylo::PhyLoTA::Config;
+use Bio::Phylo::Util::Logger ':levels';
 
 my $SINGLETON;
 our $AUTOLOAD;
+my $log = Bio::Phylo::Util::Logger->new;
 
 sub new {
     my $class = shift;
@@ -26,6 +28,11 @@ sub new {
     return $SINGLETON;
 }
 
+sub DESTROY {
+    my $self = shift;
+    $self->disconnect if $self->dbh;
+}
+
 sub AUTOLOAD {
     my $self = shift;
     my $method = $AUTOLOAD;
@@ -34,7 +41,11 @@ sub AUTOLOAD {
         return $self->{"-$method"};
     }
     else {
-        $self->{'-dbh'}->$method(@_) if $self->{'-dbh'};
+        if ( not $self->dbh->ping ) {
+            $log->warn("handle was disconnected, reconnecting...");
+            $self->{'-dbh'} = DBI->connect($self->dsn,$self->user,$self->pass);
+        }
+        $self->dbh->$method(@_);
     }    
 }
 
