@@ -166,9 +166,56 @@ __PACKAGE__->add_columns(
 );
 __PACKAGE__->set_primary_key("ti");
 
+=head1 RELATIONS
 
-# Created by DBIx::Class::Schema::Loader v0.07002 @ 2012-05-26 14:28:40
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:RB2bBtVI0KdlrB2aI4/SHQ
+=head2 ci_gis
+
+Type: has_many
+
+Related object: L<Bio::Phylo::PhyLoTA::DAO::Result::CiGi>
+
+=cut
+
+__PACKAGE__->has_many(
+  "ci_gis",
+  "Bio::Phylo::PhyLoTA::DAO::Result::CiGi",
+  { "foreign.ti" => "self.ti" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+=head2 clusters
+
+Type: has_many
+
+Related object: L<Bio::Phylo::PhyLoTA::DAO::Result::Cluster>
+
+=cut
+
+__PACKAGE__->has_many(
+  "clusters",
+  "Bio::Phylo::PhyLoTA::DAO::Result::Cluster",
+  { "foreign.ti_root" => "self.ti" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+=head2 seqs
+
+Type: has_many
+
+Related object: L<Bio::Phylo::PhyLoTA::DAO::Result::Seq>
+
+=cut
+
+__PACKAGE__->has_many(
+  "seqs",
+  "Bio::Phylo::PhyLoTA::DAO::Result::Seq",
+  { "foreign.ti" => "self.ti" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07002 @ 2012-05-28 21:25:21
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:YbcxTcYZg6ivh/cJixgZUQ
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration
