@@ -1,0 +1,7 @@
+.*\.gz
+.*\.dmp
+\.git
+\.DS_Store
+Makefile
+MANIFEST\.skip
+phylota\.kpf
