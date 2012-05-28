@@ -17,7 +17,7 @@ __PACKAGE__->load_namespaces;
 
 # You can replace this text with custom content, and it will be preserved on regeneration
 
-=head1 TITLE
+=head1 NAME
 
 Bio::Phylo::PhyLoTA::DAO - The database schema
 
