@@ -190,12 +190,10 @@ __PACKAGE__->has_many(
 
 # You can replace this text with custom content, and it will be preserved on regeneration
 use Bio::Phylo::PhyLoTA::Config;
-my $config = Bio::Phylo::PhyLoTA::Config->new;
 sub table {
 	my $class = shift;
 	my $table = shift;
-	my $release = $config->currentGBRelease;
+	my $release = Bio::Phylo::PhyLoTA::Config->new->currentGBRelease;
 	$class->SUPER::table( $table . '_' . $release );
 }
-
 1;
