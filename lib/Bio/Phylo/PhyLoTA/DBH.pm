@@ -17,7 +17,8 @@ sub new {
         $args{'-host'}     ||= $config->HOST;
         $args{'-user'}     ||= $config->USER;
         $args{'-pass'}     ||= $config->PASS;
-        $args{'-dsn'} = sprintf('DBI:%s:database=%s;host=%s', @args{qw[-rdbms -database -host]});
+        my $dsn_tmpl  = 'DBI:%s:database=%s;host=%s';
+        $args{'-dsn'} = sprintf($dsn_tmpl, @args{qw[-rdbms -database -host]});
         $args{'-dbh'} = DBI->connect($args{'-dsn'},@args{qw[-user -pass]});
         $SINGLETON = \%args;
         bless $SINGLETON, $class;
