@@ -1,0 +1,13 @@
+setup :
+	echo "Configured for genbank release number [% conf.currentGBRelease %]"
+
+[% conf.GB_TAXONOMY_DIR %]/[% conf.GB_TAXONOMY_ARC %] : 
+	wget [% conf.GB_TAXONOMY_URL %] -O $@
+
+[% conf.GB_TAXONOMY_DIR %]/names.dmp : [% conf.GB_TAXONOMY_DIR %]/[% conf.GB_TAXONOMY_ARC %]
+	cd [% conf.GB_TAXONOMY_DIR %] && tar -zxvf [% conf.GB_TAXONOMY_ARC %] $(@F) && cd -
+
+[% conf.GB_TAXONOMY_DIR %]/nodes.dmp : [% conf.GB_TAXONOMY_DIR %]/[% conf.GB_TAXONOMY_ARC %]
+	cd [% conf.GB_TAXONOMY_DIR %] && tar -zxvf [% conf.GB_TAXONOMY_ARC %] $(@F) && cd -
+	
+taxonomy : [% conf.GB_TAXONOMY_DIR %]/names.dmp [% conf.GB_TAXONOMY_DIR %]/nodes.dmp
