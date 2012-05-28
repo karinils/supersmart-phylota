@@ -16,6 +16,26 @@ __PACKAGE__->load_namespaces;
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration
+
+=head1 TITLE
+
+Bio::Phylo::PhyLoTA::DAO - The database schema
+
+=head1 DESCRIPTION
+
+We use a relational schema implemented in MySQL with a small number of tables.
+The 'seqs' table is used across all releases of the database. Other tables have
+a suffix consisting of '_xx' indicating the GenBank release number.
+
+The 'nodes_xx' table is constructed in part from NCBI's taxonomy flatfiles and
+in part from calculations and summaries built by us. The 'seqs' table is data
+taken directly from GenBank sequence flatfiles. The 'clusters_xx' contains
+summary information obtained by the clustering pipeline, and information about
+individual clusters is stored in 'cigi_xx'. Summary statistics on the entire
+cluster set are calculated and stored in 'summary_stats'.
+
+=cut
+
 use Bio::Phylo::PhyLoTA::DBH;
 my $SINGLETON;
 sub new {
