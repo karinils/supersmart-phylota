@@ -1,0 +1,1 @@
+This is the working directory for all-vs-all BLAST
