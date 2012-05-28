@@ -67,6 +67,13 @@ sub AUTOLOAD {
     $key =~ s/.+://;
     if ( exists $root->{$key} ) {
         $root->{$key} = shift if @_;
+        
+        # make paths absolute if that resolves an otherwise non-existant path
+        if ( $key =~ /(?:FILE|DIR)$/ ) {
+            if ( not -e $root->{$key} and -e $ENV{PHYLOTA_HOME} . '/' . $root->{$key} ) {
+                return $ENV{PHYLOTA_HOME} . '/' . $root->{$key};
+            }            
+        }        
         return $root->{$key};
     }
     else {
