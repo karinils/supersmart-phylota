@@ -13,25 +13,25 @@ create table if not exists ci_gi(
 
 drop table if exists nodes;
 create table if not exists nodes(
-    ti INT UNSIGNED primary key,
-    ti_anc INT UNSIGNED, 
-    INDEX(ti_anc), 
-    terminal_flag BOOL, -- if '1', node is a tip
-    rank_flag BOOL, 
-    model BOOL,
-    taxon_name VARCHAR(128),
-    common_name VARCHAR(128),
-    rank varchar(64),
-    n_gi_node INT UNSIGNED, 
-    n_gi_sub_nonmodel INT UNSIGNED,
-    n_gi_sub_model INT UNSIGNED,
-    n_clust_node INT UNSIGNED, 
-    n_clust_sub INT UNSIGNED, 
-    n_PIclust_sub INT UNSIGNED, 
-    n_sp_desc INT UNSIGNED,
-    n_sp_model INT UNSIGNED,
-    n_leaf_desc INT UNSIGNED,
-    n_otu_desc INT UNSIGNED   
+	ti INT UNSIGNED primary key,
+	ti_anc INT UNSIGNED, 
+	INDEX(ti_anc), 
+	terminal_flag BOOL, -- if '1', node is a tip
+	rank_flag BOOL, 
+	model BOOL,
+	taxon_name VARCHAR(128),
+	common_name VARCHAR(128),
+	rank varchar(64),
+	n_gi_node INT UNSIGNED, 
+	n_gi_sub_nonmodel INT UNSIGNED,
+	n_gi_sub_model INT UNSIGNED,
+	n_clust_node INT UNSIGNED, 
+	n_clust_sub INT UNSIGNED, 
+	n_PIclust_sub INT UNSIGNED, 
+	n_sp_desc INT UNSIGNED,
+	n_sp_model INT UNSIGNED,
+	n_leaf_desc INT UNSIGNED,
+	n_otu_desc INT UNSIGNED   
 );
 
 drop table if exists clusters;
@@ -59,7 +59,7 @@ create table if not exists clusters(
 	ortho TINYINT 		-- 1 = orthologous cluster
 );
 
-drop table if summary_stats;
+drop table if exists summary_stats;
 create table if not exists summary_stats (
 	gb_release INT UNSIGNED,    -- genbank release number
 	gb_rel_date VARCHAR(25),    -- genbank release date
@@ -76,4 +76,17 @@ create table if not exists summary_stats (
 	n_large_ti_clusts INT UNSIGNED,
 	n_largest_gi_clust INT UNSIGNED,
 	n_largest_ti_clust INT UNSIGNED
+);
+
+drop table if exists seqs;
+create table if not exists seqs (
+	gi BIGINT UNSIGNED primary key, -- checked
+	ti INT UNSIGNED,                -- checked
+	length INT UNSIGNED,            -- checked
+	division VARCHAR(128),          -- not sure about name or type
+	gb_rel_date VARCHAR(25),        -- probably correct
+	gb_release INT UNSIGNED,        -- probably correct
+	mol_type VARCHAR(25),           -- not sure about name or type
+	def LONGTEXT,                   -- checked
+	seq LONGTEXT                    -- checked
 );
