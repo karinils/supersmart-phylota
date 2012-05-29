@@ -21,6 +21,24 @@ __PACKAGE__->load_namespaces;
 
 Bio::Phylo::PhyLoTA::DAO - The database schema
 
+=head1 SYNOPSIS
+
+    use Bio::Phylo::PhyLoTA::DAO;
+    
+    my $schema = Bio::Phylo::PhyLoTA::DAO->new;
+    my $node = $schema->resultset('Node')->find(9606);
+    while($node) {
+        print $node->taxon_name, "\n";
+        my $clusters = $node->clusters;
+        while( my $c = $clusters->next ) {
+            my $gis = $schema->resultset('CiGi')->search({ clustid => $c->ci });
+            while ( my $g = $gis->next ) {
+                print $g->gi, "\n";
+            }
+        }
+        $node = $schema->resultset('Node')->find($node->ti_anc);
+    }
+
 =head1 DESCRIPTION
 
 We use a relational schema implemented in MySQL with a small number of tables.

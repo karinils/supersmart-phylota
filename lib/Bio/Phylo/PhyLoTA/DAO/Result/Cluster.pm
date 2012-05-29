@@ -23,13 +23,14 @@ __PACKAGE__->table("clusters");
 
   data_type: 'integer'
   extra: {unsigned => 1}
+  is_foreign_key: 1
   is_nullable: 1
 
 =head2 ci
 
   data_type: 'integer'
   extra: {unsigned => 1}
-  is_nullable: 1
+  is_nullable: 0
 
 =head2 cl_type
 
@@ -128,13 +129,30 @@ __PACKAGE__->table("clusters");
   data_type: 'tinyint'
   is_nullable: 1
 
+=head2 n_gen
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_nullable: 1
+
+=head2 n_child
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_nullable: 1
+
 =cut
 
 __PACKAGE__->add_columns(
   "ti_root",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 1,
+  },
   "ci",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
+  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
   "cl_type",
   {
     data_type => "enum",
@@ -175,12 +193,46 @@ __PACKAGE__->add_columns(
   { data_type => "float", is_nullable => 1 },
   "ortho",
   { data_type => "tinyint", is_nullable => 1 },
+  "n_gen",
+  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
+  "n_child",
+  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
+);
+__PACKAGE__->set_primary_key("ci");
+
+=head1 RELATIONS
+
+=head2 ti_root
+
+Type: belongs_to
+
+Related object: L<Bio::Phylo::PhyLoTA::DAO::Result::Node>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "ti_root",
+  "Bio::Phylo::PhyLoTA::DAO::Result::Node",
+  { ti => "ti_root" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "CASCADE",
+    on_update     => "CASCADE",
+  },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07002 @ 2012-05-26 14:28:40
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:aOIPYTQjlgtypxcbLW9Frw
+# Created by DBIx::Class::Schema::Loader v0.07002 @ 2012-05-29 00:13:17
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:oTSbdQg+uqkhbQlCiDai+Q
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration
+use Bio::Phylo::PhyLoTA::Config;
+sub table {
+	my $class = shift;
+	my $table = shift;
+	my $release = Bio::Phylo::PhyLoTA::Config->new->currentGBRelease;
+	$class->SUPER::table( $table . '_' . $release );
+}
 1;
