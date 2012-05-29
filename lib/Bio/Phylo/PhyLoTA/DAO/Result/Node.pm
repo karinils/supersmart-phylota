@@ -166,10 +166,34 @@ __PACKAGE__->add_columns(
 );
 __PACKAGE__->set_primary_key("ti");
 
+=head1 RELATIONS
 
-# Created by DBIx::Class::Schema::Loader v0.07002 @ 2012-05-26 14:28:40
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:RB2bBtVI0KdlrB2aI4/SHQ
+=head2 clusters
+
+Type: has_many
+
+Related object: L<Bio::Phylo::PhyLoTA::DAO::Result::Cluster>
+
+=cut
+
+__PACKAGE__->has_many(
+  "clusters",
+  "Bio::Phylo::PhyLoTA::DAO::Result::Cluster",
+  { "foreign.ti_root" => "self.ti" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07002 @ 2012-05-29 00:13:17
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:9210Nia2pQOVAf/8pZ/j+w
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration
+use Bio::Phylo::PhyLoTA::Config;
+sub table {
+	my $class = shift;
+	my $table = shift;
+	my $release = Bio::Phylo::PhyLoTA::Config->new->currentGBRelease;
+	$class->SUPER::table( $table . '_' . $release );
+}
 1;

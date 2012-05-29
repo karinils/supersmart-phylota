@@ -3,7 +3,6 @@ use strict;
 use warnings;
 use lib 'lib';
 use ExtUtils::MakeMaker;
-use Bio::Phylo::PhyLoTA::Config;
 
 WriteMakefile(
 	'NAME' => 'Bio::Phylo::PhyLoTA',
@@ -21,16 +20,19 @@ WriteMakefile(
 
 
 sub MY::postamble {
-	my %args = %{ shift(@_) };
-	$args{'conf'} = Bio::Phylo::PhyLoTA::Config->new('conf/phylota.ini');
+	my %args = %{ shift(@_) };	
 	my $result;
 	eval {
 		require Template;
+		require Bio::Phylo::PhyLoTA::Config;
+		$args{'conf'} = Bio::Phylo::PhyLoTA::Config->new('conf/phylota.ini');
 		my $tt = Template->new();
 		$tt->process('Makefile.tmpl',\%args,\$result) || die $tt->error;
 	};
 	if ( $@ ) {
-		warn "Couldn't create Makefile postamble: $@";
+		warn "*** Couldn't create extended Makefile.\n",
+		     "*** Re-run $0 after resolving missing dependencies.\n",
+		     "*** The error message we got was:\n $@";
 		return undef;
 	}
 	else {

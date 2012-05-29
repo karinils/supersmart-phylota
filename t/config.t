@@ -16,8 +16,11 @@ my @dirs = qw(
 	BLAST_DIR
 );
 for my $dir ( @dirs ) {
-	ok( $config->$dir, "directory $dir is defined" );
-	ok( -d $config->$dir, "directory $dir exists" );
+	SKIP : {
+		skip "no head/slave config yet", 2 if $dir =~ /^SLAVE_/;
+		ok( $config->$dir, "directory $dir is defined" );
+		ok( -d $config->$dir, "directory $dir exists" );
+	};
 }
 
 # verify these files exist
@@ -28,14 +31,20 @@ my @files = qw(
 	BLAST2BLINKOVERLAP
 );
 for my $file ( @files ) {
-	ok( $config->$file, "file $file is defined" );
-	ok( -f $config->$file, "file $file exists" );
+	SKIP : {
+		skip "no BLAST2BLINK files yet", 2 if $file =~ /^BLAST2BLINK/;
+		ok( $config->$file, "file $file is defined" );
+		ok( -f $config->$file, "file $file exists" );
+	};
 }
 
 # verify these servers are reachable
 my @servers = qw(HOST SERVER);
 my $p = Net::Ping->new;
 for my $server ( @servers ) {
-	ok( $config->$server, "server $server is defined" );
-	ok( $p->ping($config->$server), "server $server is reachable" );
+	SKIP : {
+		skip "no SERVER available yet", 2 if $server =~ /SERVER/;
+		ok( $config->$server, "server $server is defined" );
+		ok( $p->ping($config->$server), "server $server is reachable" );
+	};
 }
