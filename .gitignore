@@ -4,3 +4,4 @@ Makefile
 phylota.komodoproject
 script/pb
 script/blast
+data/GBIF/taxonomy-search-*
