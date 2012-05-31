@@ -130,3 +130,19 @@ create table if not exists summary_stats (
 	alignments_done tinyint(1) DEFAULT NULL,
 	trees_done tinyint(1) DEFAULT NULL	
 ) ENGINE=INNODB;
+
+-- drop table if exists specimens;
+create table if not exists specimens (
+	si int(10) unsigned not null primary key, -- reference ID
+	ti int(10) unsigned default null,
+	index(ti),
+	foreign key (ti) references nodes(ti),
+	latitude float signed default null,
+	index(latitude),
+	longitude float signed default null,
+	index(longitude),
+	min_age_years int(10) unsigned DEFAULT NULL,
+	index(min_age_years),
+	max_age_years int(10) unsigned DEFAULT NULL,
+	index(max_age_years)
+) ENGINE=INNODB;
