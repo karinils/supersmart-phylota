@@ -31,11 +31,8 @@ my @files = qw(
 	BLAST2BLINKOVERLAP
 );
 for my $file ( @files ) {
-	SKIP : {
-		skip "no BLAST2BLINK files yet", 2 if $file =~ /^BLAST2BLINK/;
-		ok( $config->$file, "file $file is defined" );
-		ok( -f $config->$file, "file $file exists" );
-	};
+	ok( $config->$file, "file $file is defined" );
+	ok( -f $config->$file, "file $file exists" );
 }
 
 # verify these servers are reachable
