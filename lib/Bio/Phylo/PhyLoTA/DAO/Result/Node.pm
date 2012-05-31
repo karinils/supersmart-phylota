@@ -183,9 +183,24 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 specimens
 
-# Created by DBIx::Class::Schema::Loader v0.07002 @ 2012-05-29 00:13:17
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:9210Nia2pQOVAf/8pZ/j+w
+Type: has_many
+
+Related object: L<Bio::Phylo::PhyLoTA::DAO::Result::Specimen>
+
+=cut
+
+__PACKAGE__->has_many(
+  "specimens",
+  "Bio::Phylo::PhyLoTA::DAO::Result::Specimen",
+  { "foreign.ti" => "self.ti" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07002 @ 2012-05-29 21:38:33
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:gASJ9/nj5PXGPX9jZT2prA
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration
