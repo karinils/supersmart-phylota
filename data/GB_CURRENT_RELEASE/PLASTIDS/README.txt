@@ -1,0 +1,1 @@
+This directory will contain chloroplast plastid genome files.
