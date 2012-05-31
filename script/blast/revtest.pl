@@ -1,5 +1,3 @@
-$x="abcdefg";
-
-$y= reverse $x;
-
+$x = "abcdefg";
+$y = reverse $x;
 print "$y\n";

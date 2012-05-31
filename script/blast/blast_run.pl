@@ -7,4 +7,3 @@
 #$ -M sanderm@email.arizona.edu
 #$ -m n
 system "./old_allallblast.pl -q test.fa -t test.fa -c pb.conf -o test.out";
-
