@@ -2,3 +2,5 @@
 *.dmp
 Makefile
 phylota.komodoproject
+script/pb
+script/blast
