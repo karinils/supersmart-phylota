@@ -57,11 +57,7 @@ cluster set are calculated and stored in 'summary_stats'.
 use Bio::Phylo::PhyLoTA::DBH;
 my $SINGLETON;
 sub new {
-	if ( not $SINGLETON ) {
-		my $class = shift;
-		my $dbh = Bio::Phylo::PhyLoTA::DBH->new;
-		$SINGLETON = $class->connect( $dbh->dsn, $dbh->user, $dbh->pass );
-	}
+	$SINGLETON ||= shift->connect( sub { Bio::Phylo::PhyLoTA::DBH->new } );
 	return $SINGLETON;
 }
 1;
