@@ -13,7 +13,7 @@ several 250 MB pieces with file names as above, but with the suffix, 'partxx'
 replacing the .gz. These can be downloaded separately. To join them again under
 Unix/Linux the command would be (for example): 
 
-cat pb.bu.rel168.8.18.2009.part* > pb.bu.rel168.8.18.2009.gz 
+cat pb.bu.rel184.4.10.2012.part* > pb.bu.rel184.4.10.2012.gz 
 
 Once the file is uncompressed it can be imported into mysql directly. The files
 are plain text, so they can also be parsed by other software easily. 
