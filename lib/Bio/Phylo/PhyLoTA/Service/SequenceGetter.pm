@@ -75,8 +75,8 @@ sub store_feature {
         $params{$tag} = $value if exists $params{$tag};
         
         # only keep the numerical part of db_xref
-        if ( $tag eq 'db_xref' ) {
-            $params{'gi_feat'} = ( $value =~ /(\d+)/ );
+        if ( $tag eq 'db_xref' && $value =~ /(\d+)/ ) {
+            $params{'gi_feat'} = $1;
         }
         
         # split protein_id as an accession number
