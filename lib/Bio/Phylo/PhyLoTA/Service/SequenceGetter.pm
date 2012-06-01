@@ -33,6 +33,65 @@ sub store_sequence {
     });
 }
 
+# then populate the CDS and RNA features, taking care with remotely accessioned features.
+# NB! Bioperl feature->spliced_seq will just return a guess at the length of the sequence, padded with 'N's
+# when the acc number is remote. This is often a bad guess because it is based on the presumption that the
+# ENTIRE feature is remote, when often just a piece of the feature is remote. Go ahead, look at the code...
+#    if( !defined $called_seq ) {
+#	$seqstr .= 'N' x $self->length;  ...here the length is for the feature's location, not the features sublocation
+#	next; ...so for something like join(BC123.1:1-100, 12-200,10000-10100) it might be 10100 minus 12.
+# DO NOT USE feat->length for split sequences at all! unless you want the length of the whole region from min to max
+sub store_feature {
+    my ( $self, $daoseq, $feat, $no_raw ) = @_;
+
+    # parameters for the Feature create method below
+    my %params = (
+        'primary_tag'   => $feat->primary_tag,
+		'gi'            => $daoseq->gi,
+		'ti'            => $daoseq->ti,
+        'range'         => $feat->location->to_FTstring(),
+        
+        'gene'          => undef, # gene symbol
+        'transl_table'  => undef, # translation table
+        'codon_start'   => undef, # reading frame
+        'product'       => undef, # gene product
+        'gi_feat'       => undef, # db_xref        
+        'acc'           => undef, # accession number, the part before the version
+        'acc_vers'      => undef, # accession number version, i.e. a number after the dot
+        'seq'           => undef, # the raw sequence, may remain undef if remote
+        'length'        => undef, # length of the raw sequence
+    );    
+    
+    # if we don't trap for remote sequences, bad things happen, see above.
+    if ( ! grep { $_->is_remote } $feat->location->each_Location() && ! $no_raw ) {
+        $params{'seq'} = $feat->spliced_seq()->seq();
+        $params{'length'} = length $params{'seq'};
+    }
+    
+    # every feature has a number of key value pairs associated with them
+    for my $tag ( $feat->get_all_tags() ) {
+        my $value = join( ' ', $feat->get_tag_values($tag) );
+        $params{$tag} = $value if exists $params{$tag};
+        
+        # only keep the numerical part of db_xref
+        if ( $tag eq 'db_xref' ) {
+            $params{'gi_feat'} = ( $value =~ /(\d+)/ );
+        }
+        
+        # split protein_id as an accession number
+        if ( $tag eq 'protein_id' && $value =~ /^([^.]+)\.(.*)$/ ) {
+            ( $params{'acc'}, $params{'acc_vers'} ) = ( $1, $2 );
+        }
+    }
+    
+    # some CDS features are not taken seriously, not translated, etc., so skip
+    if ( $feat->primary_tag =~ /CDS/ ) {        
+        return if not defined $params{'acc'};
+    }
+
+    return $schema->resultset('Feature')->create( \%params );
+}
+
 sub _formatDate {
     my %monthH = (
         JAN => 1,
