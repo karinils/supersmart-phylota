@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 #  **************************************************************************************
 #  **************************************************************************************
 #  ****** !!!!!!!!! DELETES CURRENT SEQ TABLE BEFORE WRITING NEW ONE !!!!!!!!!!**********
@@ -10,29 +10,43 @@
 # NOTE. The release number is whatever is stored in that file in the GB_CURRENT_RELEASE directory
 # If the gi already exists in the table from a previous release, DBI will balk at re-inserting
 # the same gi in this release. On the other hand, for a truly new sequence, the release number will be stored.
-use DBI;
-use pb;
-use Bio::SeqIO;
+use strict;
+use warnings;
 use Bio::Seq;
-while ( $fl = shift @ARGV ) {
-    $par = shift @ARGV;
-    if ( $fl =~ /-c/ ) { $configFile = $par; }
-}
-%pbH     = %{ pb::parseConfig($configFile) };
-$release = pb::currentGBRelease();
-my $sizeCriterionNuc     = $pbH{'cutoffLengthNuc'};
-my $sizeCriterionFeature = $pbH{'cutoffLengthFeatures'};
-die "Cutoff parameters not provided in config files\n"
-  if ( !$sizeCriterionNuc || !$sizeCriterionFeature );
-$seqTable     = "seqs";
-$featureTable = "features";
-$dbh =
-  DBI->connect( "DBI:mysql:database=$pbH{MYSQL_DATABASE};host=$pbH{MYSQL_HOST}",
-    $pbH{MYSQL_USER}, $pbH{MYSQL_PASSWD} );
+use Bio::SeqIO;
+use Bio::Phylo::PhyLoTA::DBH;
+use Bio::Phylo::PhyLoTA::DAO;
+use Bio::Phylo::PhyLoTA::Config;
+use Bio::Phylo::PhyLoTA::Service::SequenceGetter;
+use Getopt::Long;
+
+# process command line arguments
+my $configFile;
+GetOptions( 'configFile=s' => $configFile );
+
+# instantiate config object
+my $config = Bio::Phylo::PhyLoTA::Config->new($configFile);
+
+# instantiate sequence getter object
+my $sg = Bio::Phylo::PhyLoTA::Service::SequenceGetter->new();
+
+# get config values
+my $release = $config->currentGBRelease();
+my $sizeCriterionNuc     = $config->cutoffLengthNuc;
+my $sizeCriterionFeature = $config->cutoffLengthFeatures;
+die "Cutoff parameters not provided in config files\n" if ( !$sizeCriterionNuc || !$sizeCriterionFeature );
+
+my $seqTable     = "seqs";
+my $featureTable = "features";
+my $dbh = Bio::Phylo::PhyLoTA::DBH->new;
+my $GB_FLATFILE_DIR = $config->GB_FLATFILE_DIR;
+my $GB_CPGENOME_DIR = $config->GB_CPGENOME_DIR;
+
 createTables();
-@files = <$pbH{GB_FLATFILE_DIR}/gb*.seq.gz>;
-push @files, <$pbH{GB_CPGENOME_DIR}/NC*.gbk>
-  ;    # get flatfiles from two directories at this point in history
+
+# get flatfiles from two directories at this point in history
+my @files = <$GB_FLATFILE_DIR/gb*.seq.gz>;
+push @files, <$GB_CPGENOME_DIR/NC*.gbk>;
 die("No files in selected directories\n") if ( scalar @files == 0 );
 add_files( $sizeCriterionNuc, $sizeCriterionFeature, @files );
 
@@ -41,10 +55,12 @@ add_files( $sizeCriterionNuc, $sizeCriterionFeature, @files );
 #########################
 sub add_files {
     my ( $sizeCriterionNuc, $sizeCriterionFeature, @files ) = @_;
-    for $file (@files) {
+    for my $file (@files) {
         print "Processing file $file...\n";
-        if ( $file =~ /\.gz$/ )    # special handing if its a gzipped file
-        {
+		
+		# special handing if its a gzipped file
+		my $in;
+        if ( $file =~ /\.gz$/ ) {
             $in = Bio::SeqIO->new(
                 -file   => "gunzip -c $file |",
                 -format => 'GenBank'
@@ -54,35 +70,9 @@ sub add_files {
             $in = Bio::SeqIO->new( -file => $file, -format => 'GenBank' );
         }
         while ( my $seqobj = $in->next_seq() ) {
+			my $s;
             eval {
-                $species  = $seqobj->species();
-                $ti       = $species->ncbi_taxid();
-                $division = $seqobj->division();
-                @dates    = $seqobj->get_dates()
-                  ; # Gotcha: I'm going to assume there is only one of these dates below...
-                $sequence = $seqobj->seq();               # string of sequence
-                $acc      = $seqobj->accession_number()
-                  ;    # when there, the accession number
-                $vers   = $seqobj->seq_version();    # when there, the version
-                $length = $seqobj->length();         # length
-                $def    = $seqobj->desc();           # description
-                $gi     = $seqobj->primary_id()
-                  ;    # a unique id for this sequence regardless
-                $fmt_date =
-                  formatDate( $dates[$#dates] )
-                  ;    #if there are multiple dates, store the last one!
-                $def      = $dbh->quote($def);
-                $acc      = $dbh->quote($acc);
-                $vers     = $dbh->quote($vers);
-                $division = $dbh->quote($division);
-                $fmt_date = $dbh->quote($fmt_date);
-                if ( $length > $sizeCriterionNuc ) { undef $sequence; }
-                $sequence = $dbh->quote($sequence);
-                $s =
-"INSERT INTO $seqTable VALUES($gi,$ti,$acc,$vers,$length,$division,$fmt_date,$release,$def,$sequence)";
-
-                #print "$s\n";
-                $dbh->do("$s") or die $dbh->errstr, "\n$s\n";
+                $sg->store_sequence($seqobj);
 
 # then populate the CDS and RNA features, taking care with remotely accessioned features.
 # NB! Bioperl feature->spliced_seq will just return a guess at the length of the sequence, padded with 'N's
@@ -92,7 +82,7 @@ sub add_files {
 #	$seqstr .= 'N' x $self->length;  ...here the length is for the feature's location, not the features sublocation
 #	next; ...so for something like join(BC123.1:1-100, 12-200,10000-10100) it might be 10100 minus 12.
 # DO NOT USE feat->length for split sequences at all! unless you want the length of the whole region from min to max
-                foreach $feat ( $seqobj->get_SeqFeatures() ) {
+                foreach my $feat ( $seqobj->get_SeqFeatures() ) {
                     if ( $feat->primary_tag =~ /CDS|RNA/ ) {
                         my (
                             $tag,      $range,        $trans,
@@ -120,7 +110,7 @@ sub add_files {
                             $feature_length   = length $feature_sequence;
                         }
                         foreach $tag ( $feat->get_all_tags() ) {
-                            $value = join( ' ', $feat->get_tag_values($tag) );
+                            my $value = join( ' ', $feat->get_tag_values($tag) );
                             if ( $tag eq 'protein_id' ) {
                                 ($protein_id) = $value;
                             }
@@ -192,7 +182,7 @@ sub add_files {
 sub createTables {
     $dbh->do("drop table $seqTable");
     $dbh->do("drop table $featureTable");
-    $s = "create table if not exists $seqTable(
+    my $s = "create table if not exists $seqTable(
 	gi 		BIGINT UNSIGNED ,
 	PRIMARY KEY(gi),
 	ti 		BIGINT UNSIGNED,
@@ -230,10 +220,8 @@ sub createTables {
     $dbh->do("$s");
 }
 
-sub formatDate
-
-  # convert from bioperl string to standard mysql date
-{
+# convert from bioperl string to standard mysql date
+sub formatDate {
     my %monthH = (
         JAN => 1,
         FEB => 2,
