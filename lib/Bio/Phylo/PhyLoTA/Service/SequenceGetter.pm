@@ -51,6 +51,7 @@ sub store_feature {
 		'ti'            => $daoseq->ti,
         'range'         => $feat->location->to_FTstring(),
         
+        # these we will populate out of the tags we read below
         'gene'          => undef, # gene symbol
         'transl_table'  => undef, # translation table
         'codon_start'   => undef, # reading frame
