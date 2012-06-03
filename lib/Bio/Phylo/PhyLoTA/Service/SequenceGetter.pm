@@ -1,6 +1,7 @@
 package Bio::Phylo::PhyLoTA::Service::SequenceGetter; # maybe this should be SequenceService?
 use strict;
 use warnings;
+use Bio::SeqIO;
 use Bio::Phylo::PhyLoTA::DAO;
 use Bio::Phylo::PhyLoTA::Config;
 
@@ -11,6 +12,24 @@ sub new {
     my $class = shift;
     my $self = bless {}, $class;
     return $self;
+}
+
+sub store_genbank_sequences {
+    my ( $self, $file ) = @_;
+    
+    # also allow gzipped files, pipe from gunzip -c
+    my $command = ( $file =~ /\.gz$/ ) ? "gunzip -c $file |" : "< $file";
+    
+    # instantiate bioperl sequence reader
+    my $reader  = Bio::SeqIO->new(
+        '-format' => 'genbank',
+        '-file'   => $command,
+    );
+    
+    # iterate over sequences in file
+    while( my $seq = $reader->next_seq ) {
+        $self->store_sequence($seq);
+    }
 }
 
 # stores a bioperl sequence object, if optional second argument is true we
