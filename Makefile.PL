@@ -17,6 +17,7 @@ WriteMakefile(
 		'DBD::mysql'   => 0,
 		'Moose'        => 0,
 		'Bio::Species' => 0,
+		'XML::Twig'    => 0,
 	}
 );
 
