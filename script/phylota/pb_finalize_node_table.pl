@@ -1,3 +1,4 @@
+# this is a legacy script file from phylota
 #!/usr/bin/perl -w
 
 # Assuming a bunch of clades have already been imported into the nodes_XX table, but that deeper

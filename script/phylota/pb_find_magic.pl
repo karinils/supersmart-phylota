@@ -1,3 +1,4 @@
+# this is a legacy script file from phylota
 #!/usr/bin/perl
 
 # Makes a list of magic nodes in a tree based on the 'nodes' table. These are nodes with n_gi_sub_nonmodel<=cutoff and

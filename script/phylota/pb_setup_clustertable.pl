@@ -1,3 +1,4 @@
+# this is a legacy script file from phylota
 #!/usr/bin/perl
 
 # Uses a nasty MySQL query of the nodes and clusters_subtrees tables to setup the cluster_table

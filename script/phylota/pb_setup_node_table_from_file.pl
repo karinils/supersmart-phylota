@@ -1,3 +1,4 @@
+# this is a legacy script file from phylota
 #!/usr/bin/perl
 
 #CAREFUL: OVERWRITES EXISTING TABLE

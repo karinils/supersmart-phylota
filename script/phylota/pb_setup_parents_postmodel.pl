@@ -1,3 +1,4 @@
+# this is a legacy script file from phylota
 #!/usr/bin/perl -w
 
 # Setups the parent nodes for node clusters of model organisms AFTER those model

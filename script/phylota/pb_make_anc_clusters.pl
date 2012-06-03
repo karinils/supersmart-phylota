@@ -1,3 +1,4 @@
+# this is a legacy script file from phylota
 #!/usr/bin/perl -w
 
 # USAGE: ./sql_make_anc_cl.pl database_name

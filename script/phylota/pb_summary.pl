@@ -1,3 +1,4 @@
+# this is a legacy script file from phylota
 #!/usr/bin/perl -w
 
 # Query the phylota database to make some summary stats; store these in the summary_stats table for later access

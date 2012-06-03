@@ -1,3 +1,4 @@
+# this is a legacy script file from phylota
 #!/usr/bin/perl
 # WARNING! REMOVES EXISTING BACKUPS!
 use strict;

@@ -1,3 +1,4 @@
+# this is a legacy script file from phylota
 #!/usr/bin/perl
 
 # Based on the NCBI nodes table and the seqs stored already in our PB seq table, find a set of mutually
