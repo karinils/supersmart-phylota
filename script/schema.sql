@@ -16,6 +16,7 @@ create table if not exists nodes(
         rank_flag tinyint(1) default null,        -- ???
         model tinyint(1) default null,            -- a 'model' organism has very many sequences
         taxon_name varchar(128) default null,     -- scientific name
+		index(taxon_name),
         common_name varchar(128) default null,    -- common name
         rank varchar(64) default null,            -- taxonomic rank
         n_gi_node int(10) unsigned default null,         -- number of GIs at that node?
