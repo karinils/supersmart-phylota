@@ -1,3 +1,4 @@
+-- this is a SQL script file
 -- drop database phylota;
 -- create database phylota;
 
