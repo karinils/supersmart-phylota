@@ -1,3 +1,4 @@
+# this is a legacy script file from phylota
 #!/usr/bin/perl
 
 # cgi script to report stats ranking biggest increases in species diversity since last release

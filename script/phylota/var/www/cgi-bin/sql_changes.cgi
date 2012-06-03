@@ -1,3 +1,4 @@
+# this is a legacy script file from phylota
 #!/usr/bin/perl -w
 
 # Shows the differences between two GB releases from the mysql database.

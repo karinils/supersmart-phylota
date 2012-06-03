@@ -1,3 +1,4 @@
+# this is a legacy script file from phylota
 #!/usr/bin/perl -w
 
 use IO::Socket;

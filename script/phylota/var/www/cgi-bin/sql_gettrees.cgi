@@ -1,3 +1,4 @@
+# this is a legacy script file from phylota
 #!/usr/bin/perl
 
 # Script to format and display trees of a cluster set. Formerly I was trying to call a PERL script that did

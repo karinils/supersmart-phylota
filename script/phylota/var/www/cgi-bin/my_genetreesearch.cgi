@@ -1,3 +1,4 @@
+# this is a legacy script file from phylota
 #!/usr/bin/perl
 
 # Programmed by Duhong Chen initially; modified by MJS

@@ -1,3 +1,4 @@
+# this is a legacy script file from phylota
 #!/usr/bin/perl
 
 # cgi script to get the cluster set for a taxon id and do a concatenation matrix chart

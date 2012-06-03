@@ -1,3 +1,4 @@
+# this is a legacy script file from phylota
 #!/usr/bin/perl
 
 # cgi script to get the cluster as a fasta file
