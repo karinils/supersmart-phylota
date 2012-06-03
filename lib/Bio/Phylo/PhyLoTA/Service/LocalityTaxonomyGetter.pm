@@ -2,10 +2,32 @@ package Bio::Phylo::PhyLoTA::Service::LocalityTaxonomyGetter;
 use strict;
 use warnings;
 use IO::File;
+use XML::Twig;
 use Data::Dumper;
 use Bio::Phylo::Util::Logger;
 use Bio::Phylo::PhyLoTA::DAO;
 use Bio::Phylo::PhyLoTA::Service::GbifReader;
+
+=head1 TITLE
+
+Bio::Phylo::PhyLoTA::Service::LocalityTaxonomyGetter - getter of taxon
+occurrence data
+
+=head1 DESCRIPTION
+
+This module manages the logic for importing occurrence data from GBIF. This
+needs to be done in two steps: i) align the NCBI taxonomy with GBIF's
+representation of it. This is done by downloading the spreadsheet that has
+the mapping from here: http://data.gbif.org/datasets/resource/13565 and
+processing it with store_gbif_ids. ii) fetch the occurrence records from
+GBIF's RESTful web service. This is done by passing a filename or URL into
+store_gbif_occurrences such as
+http://data.gbif.org/ws/rest/occurrence/list?taxonconceptkey=106015799
+
+=cut
+
+# URL stem for requests of occurrence records
+my $GBIF_REST = 'http://data.gbif.org/ws/rest/occurrence/list?taxonconceptkey=';
 
 # instantiate logger
 my $log = Bio::Phylo::Util::Logger->new;
@@ -13,8 +35,55 @@ my $log = Bio::Phylo::Util::Logger->new;
 # instantiate schema
 my $schema = Bio::Phylo::PhyLoTA::DAO->new;
 
+sub store_gbif_occurrences {
+    my ( $self, $resource ) = @_;
+    
+    # instantiate XML parser
+    my $twig = XML::Twig->new(
+        'twig_handlers' => {
+            
+            # set a handler for each occurrence record
+            'to:TaxonOccurrence' => sub {
+                my ( $twig, $elt ) = @_;
+                
+                # fetch the GBIF taxon identifier, xpath relative to focal elt
+                my $tc = $elt->
+                    first_child('to:identifiedTo')->
+                    first_child('to:Identification')->
+                    first_child('to:taxon')->
+                    first_child('tc:TaxonConcept');
+                
+                # create record representation
+                my %record = (
+                    'occurrence_id' => $elt->att('gbifKey'),
+                    'gbid_id'       => $tc->att('gbifKey'),
+                );
+                
+                # iterate over useful metadata
+                for my $key ( qw(country decimalLatitude decimalLongitude) ) {
+                    my $child  = $elt->first_child("to:$key");
+                    my $value  = $child->text if $child;
+                    my $column = $key;
+                    $column =~ s/decimalL/l/;
+                    $record{$column} = $value;
+                }
+                
+                # let's skip over "empty" records
+                return unless $record{country} or $record{latitude} && $record{longitude};                
+                $log->debug(Dumper(\%record));
+            }
+        }
+    );
+    
+    # handle either file or url
+    my $method = ( $resource =~ /^http:/ ) ? 'parseurl' : 'parsefile';
+    $log->info("going to read from $resource");
+    $twig->$method($resource);
+    $log->info("done reading from $resource");
+}
+
 sub store_gbif_ids {
-    my ( $self, $file ) = @_;
+    my ( $self, $file, $fetch_occurrences ) = @_;
     
     # instantiate reader 
     my $r = Bio::Phylo::PhyLoTA::Service::GbifReader->new( 'file' => $file );    
@@ -52,7 +121,7 @@ sub store_gbif_ids {
                             $lookup{$name} = $seen++;
                         }
                         else {
-                            $log->warn("apparent mismatch in higher ranks");
+                            $log->warn("apparent mismatch in higher ranks of $gbif_name ($ti)");
                             next MATCH;
                         }
                     }
@@ -62,9 +131,14 @@ sub store_gbif_ids {
                 }
                 
                 # if we reach this point, we've found a valid match
-                $log->warn("GBIF:$gbif_id <=> NCBI:$ti");
+                $log->info("GBIF:$gbif_id <=> NCBI:$ti ($gbif_name)");
                 $log->debug("GBIF:".Dumper(\%classification));
                 $log->debug("NCBI:".Dumper(\%lookup));
+                
+                # optionally follow links to occurrence records
+                if ( $fetch_occurrences ) {
+                    $self->store_gbif_occurrences( $GBIF_REST . $gbif_id );
+                }
             }
         }
         else {
