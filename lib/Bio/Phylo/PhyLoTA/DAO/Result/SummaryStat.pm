@@ -1,3 +1,5 @@
+# this is an object oriented perl module
+
 package Bio::Phylo::PhyLoTA::DAO::Result::SummaryStat;
 
 # Created by DBIx::Class::Schema::Loader

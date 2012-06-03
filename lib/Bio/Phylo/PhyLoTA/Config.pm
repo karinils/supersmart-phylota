@@ -1,3 +1,4 @@
+# this is an object oriented perl module
 package Bio::Phylo::PhyLoTA::Config;
 use strict;
 use warnings;

@@ -1,3 +1,5 @@
+# this is an object oriented perl module
+
 package Bio::Phylo::PhyLoTA::DAO::Result::Node;
 
 # Created by DBIx::Class::Schema::Loader

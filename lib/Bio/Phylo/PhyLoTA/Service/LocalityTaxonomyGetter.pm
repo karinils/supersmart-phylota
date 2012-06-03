@@ -1,3 +1,5 @@
+# this is an object oriented perl module
+
 package Bio::Phylo::PhyLoTA::Service::LocalityTaxonomyGetter;
 use strict;
 use warnings;
@@ -10,3 +12,13 @@ sub new {
 
 
 1;
+
+=head1 NAME
+
+Bio::Phylo::PhyLoTA::Service::LocalityTaxonomyGetter - Locality Taxonomy Getter
+
+=head1 DESCRIPTION
+
+Downloads species distribution data from GBIF (www.gbif.org).
+
+=cut
