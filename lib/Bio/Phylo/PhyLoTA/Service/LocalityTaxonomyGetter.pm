@@ -56,7 +56,7 @@ sub store_gbif_occurrences {
                 # create record representation
                 my %record = (
                     'occurrence_id' => $elt->att('gbifKey'),
-                    'gbid_id'       => $tc->att('gbifKey'),
+                    'gbif_id'       => $tc->att('gbifKey'),
                 );
                 
                 # iterate over useful metadata
