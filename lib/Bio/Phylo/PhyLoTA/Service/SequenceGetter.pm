@@ -1,18 +1,10 @@
 package Bio::Phylo::PhyLoTA::Service::SequenceGetter; # maybe this should be SequenceService?
 use strict;
 use warnings;
+use Moose;
 use Bio::SeqIO;
-use Bio::Phylo::PhyLoTA::DAO;
-use Bio::Phylo::PhyLoTA::Config;
 
-my $schema = Bio::Phylo::PhyLoTA::DAO->new;
-my $config = Bio::Phylo::PhyLoTA::Config->new;
-
-sub new {
-    my $class = shift;
-    my $self = bless {}, $class;
-    return $self;
-}
+extends 'Bio::Phylo::PhyLoTA::Service';
 
 sub store_genbank_sequences {
     my ( $self, $file ) = @_;
@@ -38,9 +30,9 @@ sub store_genbank_sequences {
 sub store_sequence {
     my ( $self, $bioperl_seq, $no_raw ) = @_;
     my @dates = $bioperl_seq->get_dates();
-    return $schema->resultset('Seq')->create( {
+    return $self->schema->resultset('Seq')->create( {
         'acc_date' => _formatDate( $dates[-1] ),
-        'gbrel'    => $config->currentGBRelease,
+        'gbrel'    => $self->config->currentGBRelease,
         'seq'      => $no_raw ? undef : $bioperl_seq->seq,        
         'acc'      => $bioperl_seq->accession_number,
         'acc_vers' => $bioperl_seq->seq_version,
@@ -109,7 +101,7 @@ sub store_feature {
         return if not defined $params{'acc'};
     }
 
-    return $schema->resultset('Feature')->create( \%params );
+    return $self->schema->resultset('Feature')->create( \%params );
 }
 
 sub _formatDate {
