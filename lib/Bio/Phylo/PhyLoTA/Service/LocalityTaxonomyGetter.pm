@@ -1,12 +1,13 @@
 package Bio::Phylo::PhyLoTA::Service::LocalityTaxonomyGetter;
 use strict;
 use warnings;
+use Moose;
 use IO::File;
 use XML::Twig;
 use Data::Dumper;
-use Bio::Phylo::Util::Logger;
-use Bio::Phylo::PhyLoTA::DAO;
 use Bio::Phylo::PhyLoTA::Service::GbifReader;
+
+extends 'Bio::Phylo::PhyLoTA::Service';
 
 =head1 TITLE
 
@@ -28,12 +29,6 @@ http://data.gbif.org/ws/rest/occurrence/list?taxonconceptkey=106015799
 
 # URL stem for requests of occurrence records
 my $GBIF_REST = 'http://data.gbif.org/ws/rest/occurrence/list?taxonconceptkey=';
-
-# instantiate logger
-my $log = Bio::Phylo::Util::Logger->new;
-
-# instantiate schema
-my $schema = Bio::Phylo::PhyLoTA::DAO->new;
 
 sub store_gbif_occurrences {
     my ( $self, $resource ) = @_;
@@ -69,17 +64,17 @@ sub store_gbif_occurrences {
                 }
                 
                 # let's skip over "empty" records
-                return unless $record{country} or $record{latitude} && $record{longitude};                
-                $log->debug(Dumper(\%record));
+                return unless $record{'country'} or $record{'latitude'} && $record{'longitude'};                
+                $self->logger->debug(Dumper(\%record));
             }
         }
     );
     
     # handle either file or url
     my $method = ( $resource =~ /^http:/ ) ? 'parseurl' : 'parsefile';
-    $log->info("going to read from $resource");
+    $self->logger->info("going to read from $resource");
     $twig->$method($resource);
-    $log->info("done reading from $resource");
+    $self->logger->info("done reading from $resource");
 }
 
 sub store_gbif_ids {
@@ -94,7 +89,7 @@ sub store_gbif_ids {
         
         # search on name initially
         if ( my $gbif_name = $species->binomial ) {
-            my @nodes = $schema->resultset('Node')->search( { 'taxon_name' => $gbif_name } )->all;
+            my @nodes = $self->schema->resultset('Node')->search( { 'taxon_name' => $gbif_name } )->all;
             
             # create a lookup table for names in the GBIF lineage,
             # with their 'depth' (node distance from tip)
@@ -121,19 +116,19 @@ sub store_gbif_ids {
                             $lookup{$name} = $seen++;
                         }
                         else {
-                            $log->warn("apparent mismatch in higher ranks of $gbif_name ($ti)");
+                            $self->logger->warn("apparent mismatch in higher ranks of $gbif_name ($ti)");
                             next MATCH;
                         }
                     }
                     
                     # go to parent
-                    $node = $schema->resultset('Node')->find($node->ti_anc);
+                    $node = $self->schema->resultset('Node')->find($node->ti_anc);
                 }
                 
                 # if we reach this point, we've found a valid match
-                $log->info("GBIF:$gbif_id <=> NCBI:$ti ($gbif_name)");
-                $log->debug("GBIF:".Dumper(\%classification));
-                $log->debug("NCBI:".Dumper(\%lookup));
+                $self->logger->info("GBIF:$gbif_id <=> NCBI:$ti ($gbif_name)");
+                $self->logger->debug("GBIF:".Dumper(\%classification));
+                $self->logger->debug("NCBI:".Dumper(\%lookup));
                 
                 # optionally follow links to occurrence records
                 if ( $fetch_occurrences ) {
@@ -142,7 +137,7 @@ sub store_gbif_ids {
             }
         }
         else {
-            $log->warn("no binomial for GBIF record " . $species->id());
+            $self->logger->warn("no binomial for GBIF record " . $species->id());
         }
     }
 }
