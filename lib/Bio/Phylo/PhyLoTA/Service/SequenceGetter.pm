@@ -1,10 +1,6 @@
-<<<<<<< HEAD
 # this is an object oriented perl module
 
-package Bio::Phylo::PhyLoTA::Service::SequenceGetter;
-=======
-package Bio::Phylo::PhyLoTA::Service::SequenceGetter; # maybe this should be SequenceService?
->>>>>>> 08808db1eb9a3087897ab7ee9c5d0ae479c73a0c
+package Bio::Phylo::PhyLoTA::Service::SequenceGetter; # maybe this should be SequenceService
 use strict;
 use warnings;
 use Moose;
