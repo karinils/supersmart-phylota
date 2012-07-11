@@ -30,8 +30,11 @@ sub read {
         my $class = $self;
         $self = bless { '_conf' => $conf }, $class;
     }
+    $self->{'_file'} = $file;
     return $self;
 }
+
+sub currentConfigFile { shift->{'_file'} }
 
 sub currentGBRelease {
     my $self = shift;

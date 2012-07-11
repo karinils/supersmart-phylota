@@ -15,11 +15,14 @@ taxonomy : [% conf.GB_TAXONOMY_DIR %]/names.dmp [% conf.GB_TAXONOMY_DIR %]/nodes
 schema : [% conf.SCHEMA_FILE %]
 	mysql -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %] < $<
 
-dao : schema
+dao :
 	perl -MDBIx::Class::Schema::Loader=make_schema_at,dump_to_dir:./lib \
 		-e 'make_schema_at("Bio::Phylo::PhyLoTA::DAO", \
 		{ db_schema => "phylota" }, \
 		[ "dbi:[% conf.RDBMS %]:dbname=[% conf.DATABASE %]", "[% conf.USER %]", "[% conf.PASS %]" ])'
 
-load_dump : [% conf.DUMP_FILE %]
+load_dump : [% conf.DUMP_IN_FILE %]
 	mysql -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %] < $<
+
+[% conf.DUMP_OUT_FILE %].gz :
+	mysqldump -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %] | gzip -9 > $@

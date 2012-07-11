@@ -1,3 +1,5 @@
 *.gz
 *.dmp
 Makefile
+phylota.komodoproject
+data/GBIF/taxonomy-search-*

@@ -15,6 +15,9 @@ WriteMakefile(
 		'Config::Tiny' => 0,
 		'DBI'          => 0,
 		'DBD::mysql'   => 0,
+		'Moose'        => 0,
+		'Bio::Species' => 0,
+		'XML::Twig'    => 0,
 	}
 );
 
