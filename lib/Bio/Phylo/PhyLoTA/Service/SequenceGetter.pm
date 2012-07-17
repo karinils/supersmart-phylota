@@ -125,6 +125,64 @@ sub _formatDate {
     return "$year-$monthH{$month}-$day";
 }
 
+sub get_largest_cluster_for_sequence{
+    my($self,$gi)=@_;
+    
+    # get the logger from Service.pm, the parent class
+    my $log=$self->logger;
+    
+    # search CiGi table for all subtree clusters that include provided gi
+    my $cigis = $self->schema->resultset('CiGi')->search({ gi => $gi, cl_type => "subtree" });
+    
+    # clusterid for most inclusive cluster
+    my $biggestcluster;
+    
+    # size of the most inclusive cluster
+    my $clustersize=0;
+    
+    # root_taxon of the most inclusive cluster
+    my $taxonid;
+    
+    # iterate over search results
+    while(my $c=$cigis->next){
+	$log->info($c->clustid," ",$c->ti,"\n");
+	
+	# search cluster table for all clusters with clustid and ti from cigi result
+	my $clusters=$self->schema->resultset('Cluster')->search({ ci => $c->clustid, ti_root => $c->ti});
+	
+	# iterate over search results
+	while (my $cluster=$clusters->next){
+	    
+	    # looking for most inclusive cluster with largest n_ti
+	    if ($cluster->n_ti > $clustersize ){
+		$clustersize=$cluster->n_ti;
+		$biggestcluster=$cluster->ci;
+		$taxonid=$cluster->ti_root;
+	    }
+	    $log->info("CLUSTER: ",$cluster->pi," ",$cluster->n_ti,"\n");
+	}
+    }
+    $log->info("biggestcluster: ",$biggestcluster," ",$taxonid->ti,"\n");
+    
+    # search CiGi table for sequences with most inclusive cluster
+    my $gis=$self->schema->resultset('CiGi')->search({ cl_type => 'subtree', ti => $taxonid->ti, clustid => $biggestcluster});
+    
+    # this will hold the resulting sequences
+    my @sequences;
+    
+    # iterate over search results
+    while(my $gi=$gis->next){
+	
+	# look up sequence by it's unique id
+	my $seq=$self->schema->resultset('Seq')->find($gi->gi);
+	
+	# add sequence to results
+	push @sequences, $seq;
+    }
+    
+    # return results
+    return @sequences;
+}
 1;
 
 =head1 NAME
