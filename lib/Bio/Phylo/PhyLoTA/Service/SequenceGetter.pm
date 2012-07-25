@@ -183,6 +183,33 @@ sub get_largest_cluster_for_sequence{
     # return results
     return @sequences;
 }
+
+sub compute_median_seq_length {
+    my ($self,@seq) = @_;
+    
+    # count number of occurrences of each sequence length
+    my %occurrences;
+    for my $seq (@seq) {
+	$occurrences{ $seq->length }++;
+    }
+    
+    # similar to $clustersize (line 141) and $biggestcluster (line 138)
+    my ($n_occurrences,$most_seen_length) = (0,0);
+    
+    # iterate over all lengths
+    for my $length ( keys %occurrences ) {
+	
+	# similar to line 156
+	if ( $occurrences{$length} > $n_occurrences ) {
+	    $most_seen_length = $length;
+	    $n_occurrences = $occurrences{$length};
+	}
+    }
+    
+    # e.g. for Cytochrome B this should return 1140
+    return $most_seen_length;
+}
+
 1;
 
 =head1 NAME
