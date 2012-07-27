@@ -210,6 +210,75 @@ sub compute_median_seq_length {
     return $most_seen_length;
 }
 
+# this method filters out duplicate sequences per taxon ,and prefers to keep sequences of the median lenght accross
+# the whole set, otherwise keep longer sequences, or otherwise keep shorter ones
+sub filter_seq_set {
+    my ($self,@seq) = @_;
+    
+    # compute accross the whole set
+    my $median_length = $self->compute_median_seq_length(@seq);
+    
+    # this is what we return, sequence objects
+    my @filtered_seqs;
+    
+    # multidimensional hash, top level keys are taxon ids, second level keys are raw sequences, values are sequence
+    # objects
+    my %sequences_for_taxon;
+    
+    # iterate over all sequences
+    for my $seq(@seq) {
+	
+	# this fetches the NCBI taxon id
+	my $ti = $seq->ti;
+	
+	# create an anonymous hash first time we see this taxon id
+	if(not exists $sequences_for_taxon{$ti}){
+	    $sequences_for_taxon{$ti}={};
+	}
+	
+	# assign the sequence object to raw sequence as key, this filters out duplicate sequences
+	$sequences_for_taxon{$ti}->{$seq->seq}=$seq;
+    }
+    
+    # iterate over taxon ids
+    for my $ti(keys %sequences_for_taxon){
+	
+	# contains raw sequence strings after filtering by length
+	my @raw_seqs;
+	
+	# contains raw sequence strings before filtering by length
+	my @taxon_seqs = keys %{ $sequences_for_taxon{$ti} };
+	
+	# only keep sequemces of median length
+	my @median_length_seqs = grep { length($_) == $median_length } @taxon_seqs;
+	
+	# only keep sequences larger than median length
+	my @longer_seqs = grep { length($_) > $median_length } @taxon_seqs;
+	
+	# tests if there were sequnces of median length
+	if (@median_length_seqs){
+	    push @raw_seqs,@median_length_seqs;
+	}
+	
+	# tests if there were sequences larger than median length
+	elsif (@longer_seqs){
+	    push @raw_seqs,@longer_seqs;
+	}
+	
+	# there were only shorter sequences
+	else {
+	    push @raw_seqs,@taxon_seqs;
+	}
+	
+	# map raw sequences back to sequence objects
+	my @seq_objects = map { $sequences_for_taxon{$ti}->{$_} } @raw_seqs;
+	push @filtered_seqs,@seq_objects;
+    }
+    
+    # return results
+    return @filtered_seqs;
+}
+
 1;
 
 =head1 NAME
