@@ -5,8 +5,12 @@ use strict;
 use warnings;
 use Moose;
 use Bio::SeqIO;
+use Bio::Tools::Run::Alignment::Muscle;
+use Bio::Phylo::Factory;
 
 extends 'Bio::Phylo::PhyLoTA::Service';
+
+my $fac=Bio::Phylo::Factory->new;
 
 sub store_genbank_sequences {
     my ( $self, $file ) = @_;
@@ -125,6 +129,8 @@ sub _formatDate {
     return "$year-$monthH{$month}-$day";
 }
 
+# this fetches the largest containing cluster for the seed sequence. This is a higher
+# taxon, such as an order, for example.
 sub get_largest_cluster_for_sequence{
     my($self,$gi)=@_;
     
@@ -184,6 +190,75 @@ sub get_largest_cluster_for_sequence{
     return @sequences;
 }
 
+# this method fetches the smallest containing cluster for the seed sequence, typically
+# these are the results of all-vs-all blasting within a fairly low level taxon such as
+# a family or a large genus (according to the NCBI taxonomy).
+sub get_smallest_cluster_for_sequence{
+    my($self,$gi)=@_;
+    
+    # get the logger from Service.pm, the parent class
+    my $log=$self->logger;
+    
+    # search CiGi table for all subtree clusters that include provided gi
+    my $cigis = $self->schema->resultset('CiGi')->search({ gi => $gi, cl_type => "subtree" });
+    
+    # clusterid for least inclusive cluster
+    my $smallestcluster;
+    
+    # size of the least inclusive cluster
+    my $clustersize=undef;
+    
+    # root_taxon of the least inclusive cluster
+    my $taxonid;
+    
+    # iterate over search results
+    while(my $c=$cigis->next){
+	$log->info($c->clustid," ",$c->ti,"\n");
+	
+	# search cluster table for all clusters with clustid and ti from cigi result
+	my $clusters=$self->schema->resultset('Cluster')->search({ ci => $c->clustid, ti_root => $c->ti});
+	
+	# iterate over search results
+	CLUSTER: while (my $cluster=$clusters->next){
+	    
+	    if (not defined $clustersize){
+		$clustersize=$cluster->n_ti;
+		$smallestcluster=$cluster->ci;
+		$taxonid=$cluster->ti_root;
+		next CLUSTER;
+	    }
+	    
+	    # looking for least inclusive cluster with largest n_ti
+	    if ($cluster->n_ti < $clustersize ){
+		$clustersize=$cluster->n_ti;
+		$smallestcluster=$cluster->ci;
+		$taxonid=$cluster->ti_root;
+	    }
+	    $log->info("CLUSTER: ",$cluster->pi," ",$cluster->n_ti,"\n");
+	}
+    }
+    $log->info("smallestcluster: ",$smallestcluster," ",$taxonid->ti,"\n");
+    
+    # search CiGi table for sequences with most inclusive cluster
+    my $gis=$self->schema->resultset('CiGi')->search({ cl_type => 'subtree', ti => $taxonid->ti, clustid => $smallestcluster});
+    
+    # this will hold the resulting sequences
+    my @sequences;
+    
+    # iterate over search results
+    while(my $gi=$gis->next){
+	
+	# look up sequence by it's unique id
+	my $seq=$self->schema->resultset('Seq')->find($gi->gi);
+	
+	# add sequence to results
+	push @sequences, $seq;
+    }
+    
+    # return results
+    return @sequences;
+}
+
 sub compute_median_seq_length {
     my ($self,@seq) = @_;
     
@@ -212,6 +287,8 @@ sub compute_median_seq_length {
 
 # this method filters out duplicate sequences per taxon ,and prefers to keep sequences of the median lenght accross
 # the whole set, otherwise keep longer sequences, or otherwise keep shorter ones
+
+# TODO: make it so that all else being equal we prefer the sequence with the lowest number of NNNN
 sub filter_seq_set {
     my ($self,@seq) = @_;
     
@@ -277,6 +354,33 @@ sub filter_seq_set {
     
     # return results
     return @filtered_seqs;
+}
+
+sub align_sequences{
+    my ($self,@seq)=@_;
+    
+    # here we convert sequence objects from the database, i.e. Bio::Phylo::PhyLoTA::DAO::Result::Seq
+    # objects (which are not compatible with bioperl) into Bio::Phylo::Matrices::Datum object, which
+    # ARE compatible, so that we can pass those into the muscle wrapper
+    my @convertedseqs;
+    for my $seq(@seq){
+	my $converted=$fac->create_datum(
+	    -type => 'dna',
+	    -name => $seq->gi,
+	    -char => $seq->seq,
+	);
+	push @convertedseqs,$converted;
+    }
+    
+    # this is a dirty, dirty hack: the bioperl wrapper for muscle craps out
+    # when 'profile' is one of its hardcoded @MUSCLE_SWITCHES with our version
+    # of the muscle command line program, so we filter out that switch here
+    @Bio::Tools::Run::Alignment::Muscle::MUSCLE_SWITCHES = grep { $_ ne 'profile' } @Bio::Tools::Run::Alignment::Muscle::MUSCLE_SWITCHES;
+    
+    # TODO: make this more flexible? E.g. also allow using clustal, or t-coffee or whatever...?
+    my $muscle = Bio::Tools::Run::Alignment::Muscle->new;
+    my $align=$muscle->align(\@convertedseqs);
+    return $align;
 }
 
 1;
