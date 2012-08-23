@@ -1,5 +1,6 @@
 *.gz
 *.dmp
 Makefile
-phylota.komodoproject
+*.komodoproject
 data/GBIF/taxonomy-search-*
+.DS_Store
