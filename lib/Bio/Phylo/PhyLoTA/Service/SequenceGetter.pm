@@ -171,23 +171,7 @@ sub get_largest_cluster_for_sequence{
     $log->info("biggestcluster: ",$biggestcluster," ",$taxonid->ti,"\n");
     
     # search CiGi table for sequences with most inclusive cluster
-    my $gis=$self->schema->resultset('CiGi')->search({ cl_type => 'subtree', ti => $taxonid->ti, clustid => $biggestcluster});
-    
-    # this will hold the resulting sequences
-    my @sequences;
-    
-    # iterate over search results
-    while(my $gi=$gis->next){
-	
-	# look up sequence by it's unique id
-	my $seq=$self->schema->resultset('Seq')->find($gi->gi);
-	
-	# add sequence to results
-	push @sequences, $seq;
-    }
-    
-    # return results
-    return @sequences;
+    return $self->get_sequences_for_cluster_object({ cl_type => 'subtree', ti => $taxonid->ti, clustid => $biggestcluster});
 }
 
 # this method fetches the smallest containing cluster for the seed sequence, typically
@@ -240,24 +224,106 @@ sub get_smallest_cluster_for_sequence{
     $log->info("smallestcluster: ",$smallestcluster," ",$taxonid->ti,"\n");
     
     # search CiGi table for sequences with most inclusive cluster
-    my $gis=$self->schema->resultset('CiGi')->search({ cl_type => 'subtree', ti => $taxonid->ti, clustid => $smallestcluster});
+    return $self->get_sequences_for_cluster_object({ cl_type => 'subtree', ti => $taxonid->ti, clustid => $smallestcluster});
+}
+
+sub get_sequences_for_cluster_object {
+    # $cluster_object is a hash reference with the following keys:
+    # - cl_type => either node or subtree
+    # - ti      => the taxon id for the root taxon
+    # - clustid => the cluster id, which is NOT a primary key
+    my ($self,$cluster_object) = @_;
     
+    # search CiGi table to fetch all GIs within this cluster
+    my $gis = $self->schema->resultset('CiGi')->search($cluster_object);
+
     # this will hold the resulting sequences
     my @sequences;
     
     # iterate over search results
-    while(my $gi=$gis->next){
+    while(my $gi = $gis->next){
 	
 	# look up sequence by it's unique id
-	my $seq=$self->schema->resultset('Seq')->find($gi->gi);
+	my $seq = $self->schema->resultset('Seq')->find($gi->gi);
 	
 	# add sequence to results
 	push @sequences, $seq;
     }
     
     # return results
-    return @sequences;
+    return @sequences;    
 }
+
+sub get_smallest_cluster_object_for_sequence{
+    my($self,$gi)=@_;
+    
+    # get the logger from Service.pm, the parent class
+    my $log=$self->logger;
+    
+    # search CiGi table for all subtree clusters that include provided gi
+    my $cigis = $self->schema->resultset('CiGi')->search({ gi => $gi, cl_type => "subtree" });
+    
+    # clusterid for least inclusive cluster
+    my $smallestcluster;
+    
+    # size of the least inclusive cluster
+    my $clustersize=undef;
+    
+    # root_taxon of the least inclusive cluster
+    my $taxonid;
+    
+    # iterate over search results
+    while(my $c=$cigis->next){
+	$log->info($c->clustid," ",$c->ti,"\n");
+	
+	# search cluster table for all clusters with clustid and ti from cigi result
+	my $clusters=$self->schema->resultset('Cluster')->search({ ci => $c->clustid, ti_root => $c->ti});
+	
+	# iterate over search results
+	CLUSTER: while (my $cluster = $clusters->next){
+	    
+	    if (not defined $clustersize){
+		$clustersize = $cluster->n_ti;
+		$smallestcluster = $cluster->ci;
+		$taxonid = $cluster->ti_root;
+		next CLUSTER;
+	    }
+	    
+	    # looking for least inclusive cluster with largest n_ti
+	    if ($cluster->n_ti < $clustersize ){
+		$clustersize = $cluster->n_ti;
+		$smallestcluster = $cluster->ci;
+		$taxonid = $cluster->ti_root;
+	    }
+	    $log->info("CLUSTER: ",$cluster->pi," ",$cluster->n_ti,"\n");
+	}
+    }
+    $log->info("smallestcluster: ",$smallestcluster," ",$taxonid->ti,"\n");
+    
+    # input to search CiGi table for sequences within cluster
+    return { cl_type => 'subtree', ti => $taxonid->ti, clustid => $smallestcluster };
+}
+
+sub get_parent_cluster_object {
+    my ($self,$cluster) = @_;
+    my $ci = $cluster->{clustid} || $cluster->{ci};
+    my $ti = $cluster->{ti} || $cluster->{ti_root};
+    my $node = $self->schema->resultset('Node')->find($ti);
+    my $parent_id = $node->ti_anc;
+    return { cl_type => 'subtree', ti => $parent_id, clustid => $ci };
+}
+
+sub get_child_cluster_objects {
+    my ($self,$cluster) = @_;
+    my $ci = $cluster->{clustid} || $cluster->{ci};
+    my $ti = $cluster->{ti} || $cluster->{ti_root};
+    my $nodes = $self->schema->resultset('Node')->search({ ti_anc => $ti });
+    my @result;
+    while(my $node = $nodes->next) {
+	push @result, { cl_type => 'subtree', ti => $node->ti, clustid => $ci };
+    }
+    return @result;
+}    
 
 sub compute_median_seq_length {
     my ($self,@seq) = @_;
