@@ -12,6 +12,12 @@ extends 'Bio::Phylo::PhyLoTA::Service';
 
 my $fac=Bio::Phylo::Factory->new;
 
+=item store_genbank_sequences
+
+This stores genbank sequences from a file.
+
+=cut
+
 sub store_genbank_sequences {
     my ( $self, $file ) = @_;
     
@@ -30,9 +36,14 @@ sub store_genbank_sequences {
     }
 }
 
-# stores a bioperl sequence object, if optional second argument is true we
-# won't store the raw sequence string (because it would be too long). returns
-# the newly created dao Seq object
+=item store_sequence
+
+This stores a bioperl sequence object, if optional second argument is true we
+won't store the raw sequence string (because it would be too long). Returns
+the newly created dao Seq object.
+
+=cut
+
 sub store_sequence {
     my ( $self, $bioperl_seq, $no_raw ) = @_;
     my @dates = $bioperl_seq->get_dates();
@@ -50,14 +61,19 @@ sub store_sequence {
     });
 }
 
-# then populate the CDS and RNA features, taking care with remotely accessioned features.
-# NB! Bioperl feature->spliced_seq will just return a guess at the length of the sequence, padded with 'N's
-# when the acc number is remote. This is often a bad guess because it is based on the presumption that the
-# ENTIRE feature is remote, when often just a piece of the feature is remote. Go ahead, look at the code...
-#    if( !defined $called_seq ) {
-#	$seqstr .= 'N' x $self->length;  ...here the length is for the feature's location, not the features sublocation
-#	next; ...so for something like join(BC123.1:1-100, 12-200,10000-10100) it might be 10100 minus 12.
-# DO NOT USE feat->length for split sequences at all! unless you want the length of the whole region from min to max
+=item store_feature
+
+This populate the CDS and RNA features, taking care with remotely accessioned features.
+NB! Bioperl feature->spliced_seq will just return a guess at the length of the sequence, padded with 'N's
+when the acc number is remote. This is often a bad guess because it is based on the presumption that the
+ENTIRE feature is remote, when often just a piece of the feature is remote. Go ahead, look at the code...
+if( !defined $called_seq ) {
+	$seqstr .= 'N' x $self->length;  ...here the length is for the feature's location, not the features sublocation
+	next; ...so for something like join(BC123.1:1-100, 12-200,10000-10100) it might be 10100 minus 12.
+DO NOT USE feat->length for split sequences at all! unless you want the length of the whole region from min to max.
+
+=cut
+
 sub store_feature {
     my ( $self, $daoseq, $feat, $no_raw ) = @_;
 
@@ -110,6 +126,12 @@ sub store_feature {
     return $self->schema->resultset('Feature')->create( \%params );
 }
 
+=item _formatDate
+
+This format dates...
+
+=cut
+
 sub _formatDate {
     my %monthH = (
         JAN => 1,
@@ -129,8 +151,13 @@ sub _formatDate {
     return "$year-$monthH{$month}-$day";
 }
 
-# this fetches the largest containing cluster for the seed sequence. This is a higher
-# taxon, such as an order, for example.
+=item get_largest_cluster_for_sequence
+
+This fetches the largest containing cluster for the seed sequence. This is a higher
+taxon, such as an order, for example.
+
+=cut
+
 sub get_largest_cluster_for_sequence{
     my($self,$gi)=@_;
     
@@ -174,9 +201,14 @@ sub get_largest_cluster_for_sequence{
     return $self->get_sequences_for_cluster_object({ cl_type => 'subtree', ti => $taxonid->ti, clustid => $biggestcluster});
 }
 
-# this method fetches the smallest containing cluster for the seed sequence, typically
-# these are the results of all-vs-all blasting within a fairly low level taxon such as
-# a family or a large genus (according to the NCBI taxonomy).
+=item get_smallest_cluster_for_sequence
+
+This method fetches the smallest containing cluster for the seed sequence, typically
+these are the results of all-vs-all blasting within a fairly low level taxon such as
+a family or a large genus (according to the NCBI taxonomy).
+
+=cut
+
 sub get_smallest_cluster_for_sequence{
     my($self,$gi)=@_;
     
@@ -227,6 +259,16 @@ sub get_smallest_cluster_for_sequence{
     return $self->get_sequences_for_cluster_object({ cl_type => 'subtree', ti => $taxonid->ti, clustid => $smallestcluster});
 }
 
+=item get_sequences_for_cluster_object
+
+This fetches the sequences for the cluster object. The $cluster_object is a hash
+reference with the following keys:
+    # - cl_type => either node or subtree
+    # - ti      => the taxon id for the root taxon
+    # - clustid => the cluster id, which is NOT a primary key
+
+=cut
+
 sub get_sequences_for_cluster_object {
     # $cluster_object is a hash reference with the following keys:
     # - cl_type => either node or subtree
@@ -253,6 +295,12 @@ sub get_sequences_for_cluster_object {
     # return results
     return @sequences;    
 }
+
+=item get_smallest_cluster_object_for_sequence
+
+This fetches the smallest, least inclusive cluster object for provided gi.
+
+=cut
 
 sub get_smallest_cluster_object_for_sequence{
     my($self,$gi)=@_;
@@ -304,6 +352,12 @@ sub get_smallest_cluster_object_for_sequence{
     return { cl_type => 'subtree', ti => $taxonid->ti, clustid => $smallestcluster };
 }
 
+=item get_parent_cluster_object
+
+This fetches the parent clusters of provided clusterid.
+
+=cut
+
 sub get_parent_cluster_object {
     my ($self,$cluster) = @_;
     my $ci = $cluster->{clustid} || $cluster->{ci};
@@ -312,6 +366,12 @@ sub get_parent_cluster_object {
     my $parent_id = $node->ti_anc;
     return { cl_type => 'subtree', ti => $parent_id, clustid => $ci };
 }
+
+=item get_child_cluster_objects
+
+This fetches the child clusters for provided clusterid.
+
+=cut
 
 sub get_child_cluster_objects {
     my ($self,$cluster) = @_;
@@ -324,6 +384,12 @@ sub get_child_cluster_objects {
     }
     return @result;
 }    
+
+=item compute_median_seq_length
+
+This computes the most occuring sequence length, i.e. the median length, within the cluster.
+
+=cut
 
 sub compute_median_seq_length {
     my ($self,@seq) = @_;
@@ -351,10 +417,15 @@ sub compute_median_seq_length {
     return $most_seen_length;
 }
 
-# this method filters out duplicate sequences per taxon ,and prefers to keep sequences of the median lenght accross
-# the whole set, otherwise keep longer sequences, or otherwise keep shorter ones
+=item filter_seq_set
+
+This method filters out duplicate sequences per taxon, and prefers to keep sequences of the median
+lenght accross the whole set, otherwise keep longer sequences, or otherwise keep shorter ones.
+
+=cut
 
 # TODO: make it so that all else being equal we prefer the sequence with the lowest number of NNNN
+
 sub filter_seq_set {
     my ($self,@seq) = @_;
     
@@ -422,6 +493,12 @@ sub filter_seq_set {
     return @filtered_seqs;
 }
 
+=item align_sequences
+
+This method align sequences using the bioperl wrapper for muscle.
+
+=cut
+
 sub align_sequences{
     my ($self,@seq)=@_;
     
@@ -457,6 +534,7 @@ Bio::Phylo::PhyLoTA::Service::SequenceGetter - Sequence Getter
 
 =head1 DESCRIPTION
 
-Gets sequences for all species from Genbank (www.ncbi.nlm.nih.gov).
+This fetches the smallest containing cluster for a provided gi from phylota, computes the median sequence
+length to filter out duplicates, and align the sequences with a bioperl wrapper for muscle.
 
 =cut
