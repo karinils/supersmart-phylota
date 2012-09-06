@@ -419,8 +419,10 @@ sub compute_median_seq_length {
 
 =item filter_seq_set
 
-This method filters out duplicate sequences per taxon, and prefers to keep sequences of the median
-lenght accross the whole set, otherwise keep longer sequences, or otherwise keep shorter ones.
+This method filters out duplicate sequences per taxon, and prefers to keep a
+sequence of the median length accross the whole set, otherwise keep the shortest
+of the ones that are longer than that or the longest of the ones that are
+shorter.
 
 =cut
 
@@ -442,51 +444,51 @@ sub filter_seq_set {
     # iterate over all sequences
     for my $seq(@seq) {
 	
-	# this fetches the NCBI taxon id
-	my $ti = $seq->ti;
-	
-	# create an anonymous hash first time we see this taxon id
-	if(not exists $sequences_for_taxon{$ti}){
-	    $sequences_for_taxon{$ti}={};
-	}
-	
-	# assign the sequence object to raw sequence as key, this filters out duplicate sequences
-	$sequences_for_taxon{$ti}->{$seq->seq}=$seq;
+		# this fetches the NCBI taxon id
+		my $ti = $seq->ti;
+		
+		# create an anonymous hash first time we see this taxon id
+		if(not exists $sequences_for_taxon{$ti}){
+			$sequences_for_taxon{$ti}={};
+		}
+		
+		# assign the sequence object to raw sequence as key, this filters out duplicate sequences
+		$sequences_for_taxon{$ti}->{$seq->seq}=$seq;
     }
     
     # iterate over taxon ids
     for my $ti(keys %sequences_for_taxon){
 	
-	# contains raw sequence strings after filtering by length
-	my @raw_seqs;
-	
-	# contains raw sequence strings before filtering by length
-	my @taxon_seqs = keys %{ $sequences_for_taxon{$ti} };
-	
-	# only keep sequemces of median length
-	my @median_length_seqs = grep { length($_) == $median_length } @taxon_seqs;
-	
-	# only keep sequences larger than median length
-	my @longer_seqs = grep { length($_) > $median_length } @taxon_seqs;
-	
-	# tests if there were sequnces of median length
-	if (@median_length_seqs){
-	    push @raw_seqs,@median_length_seqs;
-	}
-	
-	# tests if there were sequences larger than median length
-	elsif (@longer_seqs){
-	    push @raw_seqs,@longer_seqs;
-	}
-	
-	# there were only shorter sequences
-	else {
-	    push @raw_seqs,@taxon_seqs;
-	}
-	
-	# map raw sequences back to sequence objects
-	my @seq_objects = map { $sequences_for_taxon{$ti}->{$_} } @raw_seqs;
-	push @filtered_seqs,@seq_objects;
+		# contains raw sequence strings after filtering by length
+		my $raw_seq;
+		
+		# contains raw sequence strings before filtering by length
+		my @taxon_seqs = keys %{ $sequences_for_taxon{$ti} };
+		
+		# only keep sequences of median length
+		my @median_length_seqs = grep { length($_) == $median_length } @taxon_seqs;
+		
+		# only keep sequences larger than median length
+		my @longer_seqs = sort { length($a) <=> length($b) } grep { length($_) > $median_length } @taxon_seqs;
+						
+		# tests if there were sequences of median length
+		if ( @median_length_seqs ) {
+			$raw_seq = $median_length_seqs[0];
+		}
+		
+		# tests if there were sequences larger than median length
+		elsif ( @longer_seqs ) {
+			$raw_seq = $longer_seqs[0];
+		}
+		
+		# there were only shorter sequences
+		else {
+			my @shorter_seqs = sort { length($b) <=> length($a) } @taxon_seqs;
+			$raw_seq = $shorter_seqs[0];
+		}
+		
+		# map raw sequences back to sequence objects
+		push @filtered_seqs,$sequences_for_taxon{$ti}->{$raw_seq};
     }
     
     # return results
