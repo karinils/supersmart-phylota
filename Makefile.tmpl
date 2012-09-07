@@ -21,8 +21,13 @@ dao :
 		{ db_schema => "phylota" }, \
 		[ "dbi:[% conf.RDBMS %]:dbname=[% conf.DATABASE %]", "[% conf.USER %]", "[% conf.PASS %]" ])'
 
+[% conf.DUMP_IN_FILE %] :
+	curl [% conf.DUMP_IN_URL %][% conf.DUMP_IN_CHUNKS %] > $@
+
+dldump : [% conf.DUMP_IN_FILE %]
+
 load_dump : [% conf.DUMP_IN_FILE %]
-	mysql -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %] < $<
+	zcat $< | mysql -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %]
 
 [% conf.DUMP_OUT_FILE %].gz :
 	mysqldump -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %] | gzip -9 > $@
