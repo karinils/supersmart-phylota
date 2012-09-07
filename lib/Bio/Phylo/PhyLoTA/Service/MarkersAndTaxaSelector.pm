@@ -4,6 +4,7 @@ package Bio::Phylo::PhyLoTA::Service::MarkersAndTaxaSelector;
 use strict;
 use warnings;
 use JSON;
+use Moose;
 use URI::Escape;
 use Data::Dumper;
 use LWP::UserAgent;
@@ -11,14 +12,24 @@ use Bio::Phylo::Factory;
 use Bio::Phylo::Util::Logger;
 use Bio::Phylo::PhyLoTA::DAO;
 
-# connect to the database
-my $schema = Bio::Phylo::PhyLoTA::DAO->new;
+extends 'Bio::Phylo::PhyLoTA::Service';
+
+=head1 NAME
+
+Bio::Phylo::PhyLoTA::Service::MarkersAndTaxaSelector - Markers and Taxa Selector
+
+=head1 DESCRIPTION
+
+Selects optimal set of taxa and markers based on #markers/sp, coverage on matrix
+(total missing data). User can change threshold.
+
+=cut
 
 # URL for the taxonomic name resolution service
 my $TNRS_URL = 'http://api.phylotastic.org/tnrs/submit';
 my $TNRS_RETRIEVE = 'http://api.phylotastic.org/tnrs/retrieve/';
 
-# defaults
+# defaults for web service
 my $timeout = 60;
 my $wait    = 5;
 
@@ -28,11 +39,7 @@ my $fac = Bio::Phylo::Factory->new;
 # this is used for logging messages
 my $log = Bio::Phylo::Util::Logger->new;
 
-sub new {
-    my $class = shift;
-    my $self = bless {}, $class;
-    return $self;
-}
+=over
 
 =item get_nodes_for_names
 
@@ -52,7 +59,7 @@ sub get_nodes_for_names {
         $log->info("going to search for name '$name'");
         
         # do we have an exact match?
-    	my $node = $schema->resultset('Node')->single( { taxon_name => $name } );
+    	my $node = $self->single_node( { taxon_name => $name } );
         
         # no exact match if ->single returns undef (i.e. false)
         if ( not $node ) {
@@ -60,7 +67,7 @@ sub get_nodes_for_names {
             
             # search the web service
             if ( my $id = $self->_do_tnrs_search($name) ) {
-               $node = $schema->resultset('Node')->find($id);
+               $node = $self->find_node($id);
                $log->info("found match for $name through TNRS");
             }
             else {
@@ -105,12 +112,13 @@ sub get_clusters_for_nodes {
         $log->debug("finding clusters for ".$node->ti);
         
         # find ci_gi intersection records for this node's ti
-        my @cigis = $schema->resultset('CiGi')->search({ ti_of_gi => $node->ti });
+        my @cigis = $self->search_ci_gi({ ti_of_gi => $node->ti });
         
         # iterate over matches
         for my $cigi ( @cigis ) {
             
-            # store these for re-use
+            # store these for re-use: their combination is the composite
+            # key for fetch clusters from the clusters table
             my $ti      = $cigi->ti;
             my $clustid = $cigi->clustid;
             my $cl_type = $cigi->cl_type;
@@ -145,6 +153,24 @@ sub get_clusters_for_nodes {
         'cl_type' => $_->{cl_type},
         'cover'   => $c->{ $_->{ti} }->{ $_->{clustid} }->{ $_->{cl_type} }
     }} @clusters;
+}
+
+=item get_tree_for_nodes
+
+Creates the Bio::Phylo tree that spans these nodes
+
+=cut
+
+sub get_tree_for_nodes {
+    my ( $self, @nodes ) = @_;
+    my $tree = $fac->create_tree;    
+    my $mrca = $tree->get_mrca(\@nodes);
+    $mrca->visit_level_order(sub{
+       my $node = shift;
+       $tree->insert($node);
+    });
+    $mrca->set_generic( 'root' => 1 );
+    return $tree;
 }
 
 =begin comment
@@ -252,14 +278,3 @@ sub _fetch_url {
 }
 
 1;
-
-=head1 NAME
-
-Bio::Phylo::PhyLoTA::Service::MarkersAndTaxaSelector - Markers and Taxa Selector
-
-=head1 DESCRIPTION
-
-Selects optimal set of taxa and markers based on #markers/sp, coverage on matrix (total missing
-data). User can change threshold.
-
-=cut
