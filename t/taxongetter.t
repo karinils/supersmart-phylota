@@ -66,7 +66,7 @@ for my $cl ( @clusters ) {
 		my @nodes_in_matching = map { $_->get_taxon->set_generic( 'gi' => 's' . $_->get_id ) } @matching;
 		my $tree = $mts->get_tree_for_nodes(@nodes_in_matching);
 		my $newick = $tree->to_newick( '-tipnames' => 'gi' );
-		$log->debug("created newick string");
+		$log->info("created newick string");
 		
 		# create out file name
 		my $treefile = $file;
