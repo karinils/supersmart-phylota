@@ -24,4 +24,41 @@ has 'logger'  => (
     'default' => sub { Bio::Phylo::Util::Logger->new },
 );
 
+my $schema = Bio::Phylo::PhyLoTA::DAO->new;
+
+sub find_seq {
+	my ( $self, $gi ) = @_;
+	return $schema->resultset('Seq')->find($gi);
+}
+
+sub search_seq {
+	my ( $self, $clause ) = @_;
+	return $schema->resultset('Seq')->search($clause);
+}
+
+sub single_seq {
+	my ( $self, $clause ) = @_;
+	return $schema->resultset('Seq')->single($clause);	
+}
+
+sub find_node {
+	my ( $self, $ti ) = @_;
+	return $schema->resultset('Node')->find($ti);
+}
+
+sub search_node {
+	my ( $self, $clause ) = @_;
+	return $schema->resultset('Node')->search($clause);
+}
+
+sub single_node {
+	my ( $self, $clause ) = @_;
+	return $schema->resultset('Node')->single($clause);	
+}
+
+sub search_ci_gi {
+	my ( $self, $clause ) = @_;
+	return $schema->resultset('CiGi')->search($clause);
+}
+
 1;
