@@ -116,4 +116,33 @@ __PACKAGE__->set_primary_key("gi");
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration
+use Bio::Phylo::PhyLoTA::Service::MarkersAndTaxaSelector;
+
+my $mts = Bio::Phylo::PhyLoTA::Service::MarkersAndTaxaSelector->new;
+
+sub get_id {
+	shift->gi;
+}
+
+sub get_taxon {
+	my $self = shift;
+	my $ti = $self->ti;
+	return $mts->find_node($ti);
+}
+
+sub get_char {
+	my $self = shift;
+	my $seq = $self->seq;
+	if ( wantarray ) {
+		return split //, $seq;
+	}
+	else {
+		return $seq;
+	}
+}
+
+sub get_entities {
+	my @char = shift->get_char;
+	return \@char;
+}
 1;
