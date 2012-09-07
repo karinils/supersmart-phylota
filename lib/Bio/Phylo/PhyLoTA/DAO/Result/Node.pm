@@ -207,10 +207,52 @@ __PACKAGE__->has_many(
 
 # You can replace this text with custom content, and it will be preserved on regeneration
 use Bio::Phylo::PhyLoTA::Config;
+use Bio::Phylo::Forest::NodeRole;
+use Bio::Phylo::PhyLoTA::Service::MarkersAndTaxaSelector;
+push @Bio::Phylo::PhyLoTA::DAO::Result::Node::ISA, 'Bio::Phylo::Forest::NodeRole';
+
+my $mts = Bio::Phylo::PhyLoTA::Service::MarkersAndTaxaSelector->new;
+my %tree;
+
 sub table {
 	my $class = shift;
 	my $table = shift;
 	my $release = Bio::Phylo::PhyLoTA::Config->new->currentGBRelease;
 	$class->SUPER::table( $table . '_' . $release );
 }
+
+sub get_parent {
+	my $self = shift;
+	if ( $self->get_generic('root') ) {
+		return;
+	}
+	if ( my $parent_ti = $self->ti_anc ) {
+		return $mts->find_node($parent_ti);
+	}
+	return;
+}
+
+sub set_parent { return shift }
+
+sub get_children {
+	my $self = shift;
+	my $ti = $self->ti;
+	my @children = $mts->search_node( { ti_anc => $ti } );
+	return \@children;
+}
+
+sub get_branch_length { return }
+
+sub set_branch_length { return shift }
+
+sub get_id { shift->ti }
+
+sub set_tree {
+	my ( $self, $tree ) = @_;
+	$tree{ $self->get_id } = $tree;
+	return $self;
+}
+
+sub get_tree { $tree{ shift->get_id } }
+
 1;
