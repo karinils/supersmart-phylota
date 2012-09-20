@@ -163,13 +163,52 @@ Creates the Bio::Phylo tree that spans these nodes
 
 sub get_tree_for_nodes {
     my ( $self, @nodes ) = @_;
-    my $tree = $fac->create_tree;    
-    my $mrca = $tree->get_mrca(\@nodes);
-    $mrca->visit_level_order(sub{
-       my $node = shift;
-       $tree->insert($node);
-    });
-    $mrca->set_generic( 'root' => 1 );
+    
+    # create new tree
+    my $tree = $fac->create_tree;
+    $log->debug("created new tree object");
+    
+    # build tree structure in hashes
+    my ( %children, %by_id );
+    for my $node ( @nodes ) {
+        
+        # for each node traverse up to the root
+        while( my $parent = $node->get_parent ) {
+            my $pid = $parent->get_id;
+            my $nid = $node->get_id;
+            
+            $children{$pid} = {} unless $children{$pid};
+            $children{$pid}->{$nid} = 1;
+            
+            # we will visit the same node via multiple, distinct paths
+            if ( not $by_id{$nid} ) {
+                $log->debug("creating node with guid $nid and name ".$node->taxon_name);
+                $by_id{$nid} = $fac->create_node( '-guid' => $nid, '-name' => $node->taxon_name );
+            }
+            $node = $parent;
+        }
+        
+        # this happens the first time, for the root
+        my $nid = $node->get_id;
+        if ( not $by_id{$nid} ) {
+            $log->debug("creating node with guid $nid and name ".$node->taxon_name);
+            $by_id{$nid} = $fac->create_node( '-guid' => $nid, '-name' => $node->taxon_name );
+        }        
+    }
+    
+    # copy the tree structure
+    for my $nid ( keys %by_id ) {
+        my $bio_phylo_node = $by_id{$nid};
+        $log->debug($bio_phylo_node->to_string);
+        if ( $children{$nid} ) {
+            for my $child_id ( keys %{ $children{$nid} } ) {
+                $bio_phylo_node->set_child($by_id{$child_id});
+                $by_id{$child_id}->set_parent($bio_phylo_node);
+            }
+        }
+        $tree->insert($bio_phylo_node);
+    }
+    
     return $tree;
 }
 
