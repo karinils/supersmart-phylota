@@ -4,3 +4,4 @@ Makefile
 *.komodoproject
 data/GBIF/taxonomy-search-*
 .DS_Store
+_Inline/
