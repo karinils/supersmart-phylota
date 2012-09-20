@@ -255,4 +255,6 @@ sub set_tree {
 
 sub get_tree { $tree{ shift->get_id } }
 
+sub get_name { shift->taxon_name }
+
 1;
