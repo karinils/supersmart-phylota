@@ -31,3 +31,13 @@ load_dump : [% conf.DUMP_IN_FILE %]
 
 [% conf.DUMP_OUT_FILE %].gz :
 	mysqldump -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %] | gzip -9 > $@
+
+[% conf.SUPERSMART_COMMONTREE %] : [% conf.SUPERSMART_SPECIESLIST %]
+	perl -Ilib script/supersmart/write_common_tree.pl --nodelabels -i $< [% conf.SUPERSMART_VERBOSITY %] > $@
+
+commontree : [% conf.SUPERSMART_COMMONTREE %]
+
+[% conf.SUPERSMART_ALIGNMENTLIST %] : [% conf.SUPERSMART_SPECIESLIST %]
+	perl -Ilib script/supersmart/write_alignments.pl -i $< [% conf.SUPERSMART_VERBOSITY %] -s [% conf.SUPERSMART_ALIGNMENTSTEM %] > $@
+
+alignments : [% conf.SUPERSMART_ALIGNMENTLIST %]
