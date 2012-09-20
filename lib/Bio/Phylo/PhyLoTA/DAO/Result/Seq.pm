@@ -145,4 +145,7 @@ sub get_entities {
 	my @char = shift->get_char;
 	return \@char;
 }
+
+sub get_name { shift->def }
+
 1;
