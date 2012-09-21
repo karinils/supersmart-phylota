@@ -32,12 +32,27 @@ load_dump : [% conf.DUMP_IN_FILE %]
 [% conf.DUMP_OUT_FILE %].gz :
 	mysqldump -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %] | gzip -9 > $@
 
-[% conf.SUPERSMART_COMMONTREE %] : [% conf.SUPERSMART_SPECIESLIST %]
+[% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_COMMONTREE %] : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SPECIESLIST %]
 	perl -Ilib script/supersmart/write_common_tree.pl --nodelabels -i $< [% conf.SUPERSMART_VERBOSITY %] > $@
 
-commontree : [% conf.SUPERSMART_COMMONTREE %]
+commontree : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_COMMONTREE %]
 
-[% conf.SUPERSMART_ALIGNMENTLIST %] : [% conf.SUPERSMART_SPECIESLIST %]
-	perl -Ilib script/supersmart/write_alignments.pl -i $< [% conf.SUPERSMART_VERBOSITY %] -s [% conf.SUPERSMART_ALIGNMENTSTEM %] > $@
+[% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_ALIGNMENTLIST %] : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SPECIESLIST %]
+	perl -Ilib script/supersmart/write_alignments.pl -i $< [% conf.SUPERSMART_VERBOSITY %] -s [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_ALIGNMENTSTEM %] > $@
 
-alignments : [% conf.SUPERSMART_ALIGNMENTLIST %]
+alignments : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_ALIGNMENTLIST %]
+
+[% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SUPERMATRIX %] : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_ALIGNMENTLIST %]
+	perl script/supersmart/concat_alignments.pl -l $< [% conf.SUPERSMART_VERBOSITY %] > $@
+
+supermatrix : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SUPERMATRIX %]
+
+[% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_RAXMLCON %] : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_COMMONTREE %] [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SUPERMATRIX %]
+	perl script/supersmart/write_constraint_tree.pl -t [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_COMMONTREE %] -s [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SUPERMATRIX %] [% conf.SUPERSMART_VERBOSITY %] > $@
+
+constraint : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_RAXMLCON %]
+
+[% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_RAXML_RESULT %] : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_RAXMLCON %] [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SUPERMATRIX %]
+	cd [% conf.SUPERSMART_WORKDIR %] && [% conf.SUPERSMART_RAXML %] [% conf.SUPERSMART_RAXML_ARGS %] -s [% conf.SUPERSMART_SUPERMATRIX %] -t [% conf.SUPERSMART_RAXMLCON %] -n [% conf.SUPERSMART_RAXML_RESULT %]
+
+raxml : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_RAXML_RESULT %]
