@@ -58,6 +58,6 @@ constraint : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_RAXMLCON %]
 raxml : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_RAXML_RESULT %]
 
 [% conf.DOC_DIR %][% conf.DOC_OUT_FILE %] : [% conf.DOC_DIR %][% conf.DOC_IN_FILE %]
-	latex $<
+	cd [% conf.DOC_DIR %] && latex [% conf.DOC_IN_FILE %]
 
 manuscript : [% conf.DOC_DIR %][% conf.DOC_OUT_FILE %]
