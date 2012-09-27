@@ -5,3 +5,4 @@ Makefile
 data/GBIF/taxonomy-search-*
 .DS_Store
 _Inline/
+MYMETA.*
