@@ -61,3 +61,11 @@ raxml : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_RAXML_RESULT %]
 	cd [% conf.DOC_DIR %] && latex [% conf.DOC_IN_FILE %]
 
 manuscript : [% conf.DOC_DIR %][% conf.DOC_OUT_FILE %]
+
+[% conf.INPARANOID_SEQ_FILE %] :
+	curl [% conf.INPARANOID_SEQ_URL %] -o $@
+
+dl_inparanoid : [% conf.INPARANOID_SEQ_FILE %]
+
+inparanoid : [% conf.INPARANOID_SEQ_FILE %]
+	formatdb -i $< -l [% conf.INPARANOID_LOG_FILE %] -p T -o T
