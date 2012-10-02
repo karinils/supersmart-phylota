@@ -47,13 +47,16 @@ alignments : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_ALIGNMENTLIST %]
 
 supermatrix : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SUPERMATRIX %]
 
+[% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_BIN_SUPERMATRIX %] : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SUPERMATRIX %]
+	cd [% conf.SUPERSMART_WORKDIR %] && [% conf.SUPERSMART_RAXML_PARSER %] -s [% conf.SUPERSMART_SUPERMATRIX %] -n [% conf.SUPERSMART_BIN_SUPERMATRIX %] -m DNA
+
 [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_RAXMLCON %] : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_COMMONTREE %] [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SUPERMATRIX %]
 	perl script/supersmart/write_constraint_tree.pl -t [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_COMMONTREE %] -s [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SUPERMATRIX %] [% conf.SUPERSMART_VERBOSITY %] > $@
 
 constraint : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_RAXMLCON %]
 
-[% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_RAXML_RESULT %] : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_RAXMLCON %] [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SUPERMATRIX %]
-	cd [% conf.SUPERSMART_WORKDIR %] && [% conf.SUPERSMART_RAXML %] [% conf.SUPERSMART_RAXML_ARGS %] -s [% conf.SUPERSMART_SUPERMATRIX %] -t [% conf.SUPERSMART_RAXMLCON %] -n [% conf.SUPERSMART_RAXML_RESULT %]
+[% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_RAXML_RESULT %] : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_RAXMLCON %] [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_BIN_SUPERMATRIX %]
+	cd [% conf.SUPERSMART_WORKDIR %] && [% conf.SUPERSMART_RAXML %] [% conf.SUPERSMART_RAXML_ARGS %] -s [% conf.SUPERSMART_BIN_SUPERMATRIX %] -t [% conf.SUPERSMART_RAXMLCON %] -n [% conf.SUPERSMART_RAXML_RESULT %]
 
 raxml : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_RAXML_RESULT %]
 
@@ -67,5 +70,12 @@ manuscript : [% conf.DOC_DIR %][% conf.DOC_OUT_FILE %]
 
 dl_inparanoid : [% conf.INPARANOID_SEQ_FILE %]
 
-inparanoid : [% conf.INPARANOID_SEQ_FILE %]
+[% conf.INPARANOID_LOG_FILE %] : [% conf.INPARANOID_SEQ_FILE %]
 	formatdb -i $< -l [% conf.INPARANOID_LOG_FILE %] -p T -o T
+
+inparanoid : [% conf.INPARANOID_LOG_FILE %]
+
+[% conf.SUPERSMART_GI2AA_FILE %] :
+	mysql -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %] -B -e 'select gi from seqs' | perl script/supersmart/write_prot_seq.pl [% conf.SUPERSMART_VERBOSITY %] > $@
+
+gi2aa : [% conf.SUPERSMART_GI2AA_FILE %]
