@@ -3,6 +3,7 @@
 Makefile
 *.komodoproject
 data/GBIF/taxonomy-search-*
+data/INPARANOID
 .DS_Store
 _Inline/
 MYMETA.*
