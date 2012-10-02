@@ -75,7 +75,10 @@ dl_inparanoid : [% conf.INPARANOID_SEQ_FILE %]
 
 inparanoid : [% conf.INPARANOID_LOG_FILE %]
 
-[% conf.SUPERSMART_GI2AA_FILE %] :
-	mysql -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %] -B -e 'select gi from seqs' | perl script/supersmart/write_prot_seq.pl [% conf.SUPERSMART_VERBOSITY %] > $@
+[% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_GILIST %] :
+	mysql -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %] -B -e 'select gi from seqs' > $@
+
+[% conf.SUPERSMART_GI2AA_FILE %] : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_GILIST %]
+	cat $< | perl script/supersmart/write_prot_seq.pl [% conf.SUPERSMART_VERBOSITY %] > $@
 
 gi2aa : [% conf.SUPERSMART_GI2AA_FILE %]
