@@ -28,11 +28,19 @@ my $log = Bio::Phylo::Util::Logger->new(
 );
 my $mts = Bio::Phylo::PhyLoTA::Service::MarkersAndTaxaSelector->new;
 
-# read names from file, clean line breaks
-open my $fh, '<', $infile or die $!;
-my @names = <$fh>;
-chomp(@names);
-$log->info("read species names from $infile");
+# read names from file or STDIN, clean line breaks
+my @names;
+if ( $infile eq '-' ) {
+	@names = <STDIN>;
+	chomp(@names);
+	$log->info("read species names from STDIN");
+}
+else {
+	open my $fh, '<', $infile or die $!;
+	@names = <$fh>;
+	chomp(@names);
+	$log->info("read species names from $infile");
+}
 
 # this will take some time to do the taxonomic name resolution in the
 # database and with webservices
