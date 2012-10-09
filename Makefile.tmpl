@@ -18,7 +18,7 @@ schema : [% conf.SCHEMA_FILE %]
 dao :
 	perl -MDBIx::Class::Schema::Loader=make_schema_at,dump_to_dir:./lib \
 		-e 'make_schema_at("Bio::Phylo::PhyLoTA::DAO", \
-		{ db_schema => "phylota" }, \
+		{ db_schema => "phylota", overwrite_modifications => 1 }, \
 		[ "dbi:[% conf.RDBMS %]:dbname=[% conf.DATABASE %]", "[% conf.USER %]", "[% conf.PASS %]" ])'
 
 [% conf.DUMP_IN_FILE %] :
