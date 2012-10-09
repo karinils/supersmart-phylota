@@ -24,7 +24,7 @@ dao :
 [% conf.DUMP_IN_FILE %] :
 	curl [% conf.DUMP_IN_URL %][% conf.DUMP_IN_CHUNKS %] > $@
 
-dldump : [% conf.DUMP_IN_FILE %]
+dl_dump : [% conf.DUMP_IN_FILE %]
 
 load_dump : [% conf.DUMP_IN_FILE %]
 	zcat $< | mysql -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %]
@@ -68,17 +68,15 @@ manuscript : [% conf.DOC_DIR %][% conf.DOC_OUT_FILE %]
 [% conf.INPARANOID_SEQ_FILE %] :
 	curl [% conf.INPARANOID_SEQ_URL %] -o $@
 
-dl_inparanoid : [% conf.INPARANOID_SEQ_FILE %]
+dl_inparanoid_blast : [% conf.INPARANOID_SEQ_FILE %]
 
 [% conf.INPARANOID_LOG_FILE %] : [% conf.INPARANOID_SEQ_FILE %]
 	formatdb -i $< -l [% conf.INPARANOID_LOG_FILE %] -p T -o T
 
-inparanoid : [% conf.INPARANOID_LOG_FILE %]
+inparanoid_blast : [% conf.INPARANOID_LOG_FILE %]
 
 [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_GILIST %] :
 	mysql -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %] -B -e 'select gi from seqs' > $@
 
-[% conf.SUPERSMART_GI2AA_FILE %] : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_GILIST %]
-	cat $< | perl script/supersmart/write_prot_seq.pl [% conf.SUPERSMART_VERBOSITY %] > $@
-
-gi2aa : [% conf.SUPERSMART_GI2AA_FILE %]
+inparanoid_schema : [% conf.INPARANOID_SQL_FILE %]
+	cat $< | mysql -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %]
