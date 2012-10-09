@@ -5,12 +5,13 @@ use strict;
 use warnings;
 use Moose;
 use Bio::SeqIO;
+use Bio::DB::GenBank;
 use Bio::Tools::Run::Alignment::Muscle;
 use Bio::Phylo::Factory;
 
 extends 'Bio::Phylo::PhyLoTA::Service';
 
-my $fac=Bio::Phylo::Factory->new;
+my $fac = Bio::Phylo::Factory->new;
 
 =item store_genbank_sequences
 
@@ -149,6 +150,32 @@ sub _formatDate {
     );
     my ( $day, $month, $year ) = split '\-', $_[0];
     return "$year-$monthH{$month}-$day";
+}
+
+=item get_aa_for_sequence
+
+This fetches the amino acid sequence (if any) for the provided nucleotide GI.
+
+=cut
+
+sub get_aa_for_sequence {
+	my ($self,$gi) = @_;
+	my $gb = Bio::DB::GenBank->new;
+	if ( my $seq = $gb->get_Seq_by_gi($gi) ) {
+		
+		# iterate over sequence features
+		for my $feat ( $seq->get_SeqFeatures ) {
+			
+			# check to see if it's a protein coding sequence with an AA translation
+			if ( $feat->primary_tag eq 'CDS' and $feat->has_tag('translation') ) {
+				
+				# fetch and pring the translation
+				my ($protseq) = $feat->get_tag_values('translation');
+				return $protseq;
+			}
+		}		
+	}
+	return;
 }
 
 =item get_largest_cluster_for_sequence
