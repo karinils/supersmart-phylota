@@ -56,9 +56,19 @@ sub single_node {
 	return $schema->resultset('Node')->single($clause);	
 }
 
+sub single_cluster {
+	my ( $self, $clause ) = @_;
+	return $schema->resultset('Cluster')->single($clause);
+}
+
 sub search_ci_gi {
 	my ( $self, $clause ) = @_;
 	return $schema->resultset('CiGi')->search($clause);
+}
+
+sub search_inparanoid {
+	my ( $self, $clause ) = @_;
+	return $schema->resultset('InParanoid')->search($clause);
 }
 
 1;
