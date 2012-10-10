@@ -76,4 +76,10 @@ __PACKAGE__->add_columns(
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration
+
+sub is_orthologous {
+	my ( $self, $other ) = @_;
+	return $self->id == $other->id && $self->guid == $other->guid && $self->bootstrap == 100 && $other->bootstrap == 100;
+}
+
 1;
