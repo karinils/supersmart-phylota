@@ -7,7 +7,9 @@ use Moose;
 use Bio::SeqIO;
 use Bio::DB::GenBank;
 use Bio::Tools::Run::Alignment::Muscle;
+use Bio::Tools::Run::StandAloneBlast;
 use Bio::Phylo::Factory;
+use Bio::Phylo::Util::Exceptions 'throw';
 
 extends 'Bio::Phylo::PhyLoTA::Service';
 
@@ -176,6 +178,64 @@ sub get_aa_for_sequence {
 		}		
 	}
 	return;
+}
+
+=item run_blast_search
+
+This runs a local BLAST search. We initially assume we run the search against
+the InParanoid data base, which is defined in the config object, and that
+we run a protein blast, i.e. 'blastp'. The method needs a -seq => $seq argument,
+which can either be a Seq object, or a raw string such as is produced by
+get_aa_for_sequence. What we get back is the following: every BLAST hit will
+have a sequence ID for which multiple InParanoid records exist, because that
+sequence has been blasted against 99 other genomes, so the return value is
+an array of result sets.
+
+If we are comparing two root clusters, and for each of those we get the seed_gi,
+we need to then get the amino acid translation for that, BLAST it against the
+database, and then in the first result set, there has to be a combination of
+results, i.e. InParanoid objects, for which $r1->is_orthologous($r2) is true.
+
+=cut
+
+sub run_blast_search {
+	my ( $self, %args ) = @_;
+	
+	# provide default database: the inparanoid FASTA file
+	if ( not $args{'-database'} ) {
+		$args{'-database'} = $self->config->INPARANOID_SEQ_FILE;
+	}
+	
+	# default is protein blast, nucleotide blast is 'blastn';
+	if ( not $args{'-program'} ) {
+		$args{'-program'} = 'blastp';
+	}
+	
+	my $blast = Bio::Tools::Run::StandAloneBlast->new(%args);
+	
+	# need -seq argument
+	if ( not $args{'-seq'} ) {
+		throw 'BadArgs' => "need -seq argument";
+	}
+	else {
+		if ( not ref $args{'-seq'} ) {
+			$args{'-seq'} = Bio::Seq->new(
+				'-id'  => 'DUMMY',
+				'-seq' => $args{'-seq'}
+			);
+		}
+		
+		# these will be InParanoid database objects		
+		my @hits;
+		my $report = $blast->blastall( $args{'-seq'} );
+		while ( my $result = $report->next_result() ) {
+			while ( my $hit = $result->next_hit() ) {
+				push @hits, $self->search_inparanoid({ 'protid' => $hit->name });
+			}
+		}
+		return @hits;
+	}
+	
 }
 
 =item get_largest_cluster_for_sequence
