@@ -42,8 +42,23 @@ for my $file ( @list ) {
 
 	# read alignment file, return hash where key is NCBI taxon ID,
 	# value is aligned sequence
-	my %matrix = parse_matrix($file);
+	my ( $seed_gi, %matrix ) = parse_matrix($file);
 	my $matrix_nchar = length $matrix{ ( keys %matrix )[0] };
+	
+=begin comment
+
+So now the logic has to be like this:
+
+1. we first check to see whether a pair of matrices is taxonomically disjoint
+2. if it isn't, we can concatenate
+3. if it is:
+	- get the seed_gis for the pair
+	- translate to amino acid
+	- do a blast against inparanoid
+	- check to see if there is a combination of hits in the result set where is_orthologous is true
+	- if it is: re-align / concatenate vertically
+
+=cut comment
 	
 	# concat current data to supermatrix
 	for my $row ( keys %matrix ) {	
@@ -75,11 +90,13 @@ print $_, ' ', $supermatrix{$_}, "\n" for keys %supermatrix;
 sub parse_matrix {
 	my $file = shift;
 	my %matrix;
+	my $seed_gi;
 	open my $fh, '<', $file or die $!;
 	while(<$fh>) {
 		chomp;
 		my @fields = split /\t/, $_;
-		$matrix{ $fields[0] } = $fields[2];
+		$matrix{ $fields[1] } = $fields[3];
+		$seed_gi = $fields[0];
 	}
-	return %matrix;
+	return $seed_gi, %matrix;
 }

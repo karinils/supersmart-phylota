@@ -59,7 +59,9 @@ for my $cl ( @clusters ) {
 	
 	# fetch ALL sequences for the cluster, reduce data set
 	my $sg = Bio::Phylo::PhyLoTA::Service::SequenceGetter->new;
-	my @seqs = $sg->filter_seq_set($sg->get_sequences_for_cluster_object($cl));
+	my @seqs    = $sg->filter_seq_set($sg->get_sequences_for_cluster_object($cl));
+	my $single  = $sg->single_cluster($cl);
+	my $seed_gi = $single->seed_gi;
 	$log->info("fetched ".scalar(@seqs)." sequences");
 	
 	# keep only the sequences for our taxa
@@ -89,7 +91,7 @@ for my $cl ( @clusters ) {
 			my $gi  = $row->get_name;
 			my $ti  = $sg->find_seq($gi)->ti;
 			my $seq = $row->get_char;
-			print $outfh "$ti\t$gi\t$seq\n";
+			print $outfh "$seed_gi\t$ti\t$gi\t$seq\n";
 		});
 		
 		# done writing
