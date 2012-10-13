@@ -80,3 +80,6 @@ inparanoid_blast : [% conf.INPARANOID_LOG_FILE %]
 
 inparanoid_schema : [% conf.INPARANOID_SQL_FILE %]
 	cat $< | mysql -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %]
+
+dl_inparanoid_sql :
+	cd [% conf.INPARANOID_SQL_DIR %] && wget --recursive --no-directories --no-parent --accept sqltable.* --level=1 [% conf.INPARANOID_SQL_URL %] && cd -
