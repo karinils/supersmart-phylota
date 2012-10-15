@@ -91,7 +91,7 @@ for my $cl ( @clusters ) {
 			my $gi  = $row->get_name;
 			my $ti  = $sg->find_seq($gi)->ti;
 			my $seq = $row->get_char;
-			print $outfh "$seed_gi\t$ti\t$gi\t$seq\n";
+			print $outfh ">gi|${gi}|seed_gi|${seed_gi}|taxon|${ti}\n$seq\n";
 		});
 		
 		# done writing
