@@ -3,6 +3,8 @@ use strict;
 use warnings;
 use Getopt::Long;
 use Bio::Phylo::Util::Logger;
+use Bio::Phylo::PhyLoTA::Service::MarkersAndTaxaSelector;
+use Bio::Phylo::PhyLoTA::Service::SequenceGetter;
 
 # process command line arguments
 my ( $list, $verbosity );
@@ -11,11 +13,17 @@ GetOptions(
 	'verbose+' => \$verbosity,
 );
 
-# instantiate logger
+# instantiate helper objects
 my $log = Bio::Phylo::Util::Logger->new(
-	'-class' => 'main',
+	'-class' => [
+		'main',
+		'Bio::Phylo::PhyLoTA::Service::MarkersAndTaxaSelector',
+		'Bio::Phylo::PhyLoTA::Service::SequenceGetter',
+	],
 	'-level' => $verbosity,
 );
+my $mts = Bio::Phylo::PhyLoTA::Service::MarkersAndTaxaSelector->new;
+my $sg  = Bio::Phylo::PhyLoTA::Service::SequenceGetter->new;
 
 # read list of files
 my @list;
@@ -25,9 +33,11 @@ my @list;
 	# may also read from STDIN, this so that we can pipe 
 	if ( $list eq '-' ) {
 		$fh = \*STDIN;
+		$log->debug("going to read file names from STDIN");
 	}
 	else {
 		open $fh, '<', $list or die $!;
+		$log->debug("going to read file names from $list");
 	}
 	
 	# slurp contents
@@ -35,68 +45,105 @@ my @list;
 	chomp @list;
 }
 
-# populate supermatrix
-my %supermatrix;
-my $nchar = 0;
+# first read all the matrices
+my %matrices;
 for my $file ( @list ) {
 
-	# read alignment file, return hash where key is NCBI taxon ID,
-	# value is aligned sequence
-	my ( $seed_gi, %matrix ) = parse_matrix($file);
-	my $matrix_nchar = length $matrix{ ( keys %matrix )[0] };
+	# read seed gi from alignment
+	my $seed_gi = read_seed_gi($file);
+	$log->debug("read seed GI $seed_gi from file $file");
 	
-=begin comment
-
-So now the logic has to be like this:
-
-1. we first check to see whether a pair of matrices is taxonomically disjoint
-2. if it isn't, we can concatenate
-3. if it is:
-	- get the seed_gis for the pair
-	- translate to amino acid
-	- do a blast against inparanoid
-	- check to see if there is a combination of hits in the result set where is_orthologous is true
-	- if it is: re-align / concatenate vertically
-
-=cut comment
-	
-	# concat current data to supermatrix
-	for my $row ( keys %matrix ) {	
-	
-		# if current data has row not yet seen, pad with '?'	
-		if ( not exists $supermatrix{$row} ) {
-			$supermatrix{$row} = '?' x $nchar;
-		}		
-		$supermatrix{$row} .= $matrix{$row};
-	}
-	
-	# add missing for supermatrix rows not in matrix
-	for my $row ( keys %supermatrix ) {
-		if ( not exists $matrix{$row} ) {
-			$supermatrix{$row} .= '?' x $matrix_nchar;
+	# do protein translation
+	if ( my $aa = $sg->get_aa_for_sequence($seed_gi) ) {
+		$log->debug("seed GI $seed_gi has protein translation");
+		
+		# run blast
+		if ( my @hits = $sg->run_blast_search( '-seq' => $aa ) ) {
+			
+			# store matrix under protid of best inparanoid hit
+			if ( $hits[0] and $hits[0]->count > 0 ) {
+				$log->debug("seed GI $seed_gi has BLAST hits");
+				
+				# fetch and store protein id
+				my $protid = $hits[0]->next->protid;
+				$log->debug("seed GI $seed_gi has best hit $protid");
+				if ( not $matrices{$protid} ) {
+					$matrices{$protid} = [];
+				}
+				push @{ $matrices{$protid} }, $file;
+			}
 		}
 	}
-	
-	# add current matrix's length to overall length
-	$nchar += $matrix_nchar;
 }
 
-# write output in phylip format
-print scalar(keys %supermatrix), ' ', $nchar, "\n";
-print $_, ' ', $supermatrix{$_}, "\n" for keys %supermatrix;
+# here we do all pairwise comparisons between inparanoid protein IDs to assess
+# orthology. if a pair is orthologous, we append matrix2 to matrix1 so the
+# %matrices hash shrinks
+my @protids = keys %matrices;
+for my $i ( 0 .. $#protids ) {
+	my $p1 = $protids[$i];
+	
+	# the hash shrinks as we get farther into the loop, so we need to check
+	# to make sure it still makes sense to do the pairwise comparison
+	if ( $matrices{$p1} ) {
+	
+		# fetch inparanoid result set 1
+		my @irs1 = $sg->search_inparanoid({ 'protid' => $p1 })->all;
+		
+		# we start at $i + 1 so that we only do the pairwise comparison
+		# in one direction
+		for my $j ( $i + 1 .. $#protids ) {
+			my $p2 = $protids[$j];
+			
+			# again, this may have shrunk too
+			if ( $matrices{$p2} ) {
+				
+				# fetch inparanoid result set 2
+				my @irs2 = $sg->search_inparanoid({ 'protid' => $p2 })->all;
+				
+				# the inparanoid tables have multiple occurrences of each
+				# protein ID, namely for each pairwise comparison between
+				# genomes. We are looking for the instance where the two 
+				# protein IDs occur because they are the ones being compared
+				PAIR: for my $k ( 0 .. $#irs1 ) {
+					for my $l ( 0 .. $#irs2 ) {
+						
+						# this test verifies that the two protein IDs occur
+						# because they are being compared, and that the
+						# bootstrap value of the comparison is 100%
+						if ( $irs1[$k]->is_orthologous($irs2[$l]) ) {
+							
+							# append the matrix or matrices from inparanoid
+							# protein ID 1 to the ones from ID 1
+							push @{ $matrices{$p1} }, @{ $matrices{$p2} };
+							delete $matrices{$p2};
+							last PAIR;
+						}
+					}
+				}
+			}
+		}
+	}
+}
 
-# reads in a file, returns a hash keyed on NCBI taxon identifiers, values
-# are aligned sequence data
-sub parse_matrix {
+=begin comment
+
+Now each list of files (value of %matrices hash) must be profile-aligned if
+there is more than one (perhaps iteratively so) until there are only singletons
+left, which are concatenated and joined in taxon IDs
+
+=cut
+
+# reads the seed GI, which is in the FASTA definition line 
+sub read_seed_gi {
 	my $file = shift;
-	my %matrix;
 	my $seed_gi;
 	open my $fh, '<', $file or die $!;
 	while(<$fh>) {
 		chomp;
-		my @fields = split /\t/, $_;
-		$matrix{ $fields[1] } = $fields[3];
-		$seed_gi = $fields[0];
+		if ( /seed_gi\|(\d+)/ ) {
+			$seed_gi = $1;
+			return $seed_gi;
+		}
 	}
-	return $seed_gi, %matrix;
 }
