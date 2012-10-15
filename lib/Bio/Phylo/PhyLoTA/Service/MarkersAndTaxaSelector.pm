@@ -212,6 +212,36 @@ sub get_tree_for_nodes {
     return $tree;
 }
 
+=item taxa_are_disjoint
+
+Computes whether two array references of taxon IDs are non-overlapping (i.e.
+disjoint).
+
+=cut
+
+sub taxa_are_disjoint {
+    my ( $self, $set1, $set2 ) = @_;
+    my %set1 = map { $_ => 1 } map { ref $_ ? $_->ti : $_ } @{ $set1 };
+    my %set2 = map { $_ => 1 } map { ref $_ ? $_->ti : $_ } @{ $set2 };
+    
+    # check if any taxon from set1 occurs in set2
+    for my $t1 ( keys %set1 ) {
+        if ( $set2{$t1} ) {
+            return 0;
+        }
+    }
+    
+    # check if any taxon from set2 occurs in set1
+    for my $t2 ( keys %set2 ) {
+        if ( $set1{$t2} ) {
+            return 0;
+        }
+    }
+    
+    # the sets are disjoint, so return true
+    return 1;
+}
+
 =begin comment
 
 Private method for querying the TNRS web service
