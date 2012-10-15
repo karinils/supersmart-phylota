@@ -79,7 +79,11 @@ __PACKAGE__->add_columns(
 
 sub is_orthologous {
 	my ( $self, $other ) = @_;
-	return $self->id == $other->id && $self->guid == $other->guid && $self->bootstrap == 100 && $other->bootstrap == 100;
+	return
+		$self->id   == $other->id &&
+		$self->guid == $other->guid &&
+		$self->bootstrap  eq '100%' &&
+		$other->bootstrap eq '100%';
 }
 
 1;
