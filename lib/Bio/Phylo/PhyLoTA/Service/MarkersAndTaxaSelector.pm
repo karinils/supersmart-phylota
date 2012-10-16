@@ -337,9 +337,8 @@ sub _fetch_url {
 	
 	# had a 200 OK
 	if ( $response->is_success or $response->code == 302 ) {
-		$log->info($response->status_line);
+		$log->info(Dumper($response));
 		my $content = $response->decoded_content;
-        $log->info($content);
 		return $content;
 	}
 	else {
