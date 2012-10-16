@@ -190,7 +190,7 @@ sub search_inparanoid {
 	my ( $self, $clause ) = @_;
 	my $result;
 	eval {
-		$result = $schema->resultset('InParanoid')->search($clause);
+		$result = $schema->resultset('Inparanoid')->search($clause);
 	};
 	if ( $@ ) {
 		throw 'BadArgs' => $@;
