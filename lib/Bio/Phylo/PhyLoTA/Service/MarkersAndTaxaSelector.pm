@@ -116,7 +116,7 @@ sub get_clusters_for_nodes {
         $log->debug("finding clusters for ".$node->ti);
         
         # find ci_gi intersection records for this node's ti
-        my @cigis = $self->search_ci_gi({ ti_of_gi => $node->ti });
+        my @cigis = $self->search_ci_gi({ ti_of_gi => $node->ti })->all;
         
         # iterate over matches
         for my $cigi ( @cigis ) {
