@@ -4,6 +4,7 @@ package Bio::Phylo::PhyLoTA::Service::SequenceGetter; # maybe this should be Seq
 use strict;
 use warnings;
 use Moose;
+use Data::Dumper;
 use Bio::SeqIO;
 use Bio::DB::GenBank;
 use Bio::Tools::Run::Alignment::Muscle;
@@ -247,6 +248,7 @@ sub run_blast_search {
 			while ( my $hit = $result->next_hit() ) {
 				$log->info("iterating over hit $hit");
 				$log->info("hit name is: ".$hit->name);
+				$log->debug(Dumper($hit));
 				
 				# XXX maybe we need to pre-process the hit name?
 				push @hits, $self->search_inparanoid({ 'protid' => $hit->name });
