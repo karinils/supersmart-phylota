@@ -58,7 +58,7 @@ for my $file ( @list ) {
 	
 	# do protein translation
 	if ( my $aa = $sg->get_aa_for_sequence($seed_gi) ) {
-		$log->debug("seed GI $seed_gi has protein translation");
+		$log->debug("seed GI $seed_gi has protein translation: $aa");
 		
 		# run blast
 		if ( my @hits = $sg->run_blast_search( '-seq' => $aa ) ) {
