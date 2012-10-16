@@ -26,95 +26,141 @@ has 'logger'  => (
 );
 
 my $schema = Bio::Phylo::PhyLoTA::DAO->new;
+my $logger = Bio::Phylo::Util::Logger->new;
 
 sub find_seq {
 	my ( $self, $gi ) = @_;
+	my $result;
 	eval {
-		return $schema->resultset('Seq')->find($gi);
+		$result = $schema->resultset('Seq')->find($gi);
 	};
 	if ( $@ ) {
 		throw 'BadArgs' => $@;
 	}
+	if ( not $result ) {
+		$logger->warn("no result!");
+	}
+	return $result;
 }
 
 sub search_seq {
 	my ( $self, $clause ) = @_;
+	my $result;
 	eval {
-		return $schema->resultset('Seq')->search($clause);
+		$result = $schema->resultset('Seq')->search($clause);
 	};
 	if ( $@ ) {
 		throw 'BadArgs' => $@;
 	}
+	if ( not $result ) {
+		$logger->warn("no result!");
+	}
+	return $result;	
 }
 
 sub single_seq {
 	my ( $self, $clause ) = @_;
+	my $result;
 	eval {
-		return $schema->resultset('Seq')->single($clause);
+		$result = $schema->resultset('Seq')->single($clause);
 	};
 	if ( $@ ) {
 		throw 'BadArgs' => $@;
-	}	
+	}
+	if ( not $result ) {
+		$logger->warn("no result!");
+	}
+	return $result;	
 }
 
 sub find_node {
 	my ( $self, $ti ) = @_;
+	my $result;
 	eval {
-		return $schema->resultset('Node')->find($ti);
+		$result = $schema->resultset('Node')->find($ti);
 	};
 	if ( $@ ) {
 		throw 'BadArgs' => $@;
-	}	
+	}
+	if ( not $result ) {
+		$logger->warn("no result!");
+	}
+	return $result;	
 }
 
 sub search_node {
 	my ( $self, $clause ) = @_;
+	my $result;
 	eval {
-		return $schema->resultset('Node')->search($clause);
+		$result = $schema->resultset('Node')->search($clause);
 	};
 	if ( $@ ) {
 		throw 'BadArgs' => $@;
-	}	
+	}
+	if ( not $result ) {
+		$logger->warn("no result!");
+	}
+	return $result;	
 }
 
 sub single_node {
 	my ( $self, $clause ) = @_;
+	my $result;
 	eval {
-		return $schema->resultset('Node')->single($clause);
+		$result = $schema->resultset('Node')->single($clause);
 	};
 	if ( $@ ) {
 		throw 'BadArgs' => $@;
-	}	
+	}
+	if ( not $result ) {
+		$logger->warn("no result!");
+	}
+	return $result;	
 }
 
 sub single_cluster {
 	my ( $self, $clause ) = @_;
+	my $result;
 	eval {
-		return $schema->resultset('Cluster')->single($clause);
+		$result = $schema->resultset('Cluster')->single($clause);
 	};
 	if ( $@ ) {
 		throw 'BadArgs' => $@;
-	}	
+	}
+	if ( not $result ) {
+		$logger->warn("no result!");
+	}
+	return $result;	
 }
 
 sub search_ci_gi {
 	my ( $self, $clause ) = @_;
+	my $result;
 	eval {
-		return $schema->resultset('CiGi')->search($clause);
+		$result = $schema->resultset('CiGi')->search($clause);
 	};
 	if ( $@ ) {
 		throw 'BadArgs' => $@;
-	}	
+	}
+	if ( not $result ) {
+		$logger->warn("no result!");
+	}
+	return $result;	
 }
 
 sub search_inparanoid {
 	my ( $self, $clause ) = @_;
+	my $result;
 	eval {
-		return $schema->resultset('InParanoid')->search($clause);
+		$result = $schema->resultset('InParanoid')->search($clause);
 	};
 	if ( $@ ) {
 		throw 'BadArgs' => $@;
-	}	
+	}
+	if ( not $result ) {
+		$logger->warn("no result!");
+	}
+	return $result;	
 }
 
 1;
