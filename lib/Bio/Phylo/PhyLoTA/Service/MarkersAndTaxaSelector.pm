@@ -72,7 +72,7 @@ sub get_nodes_for_names {
             # search the web service
             if ( my $id = $self->_do_tnrs_search($name) ) {
                $node = $self->find_node($id);
-               $log->info("found match for $name through TNRS");
+               $log->info("found match '$node' for $name through TNRS");
             }
             else {
                 $log->warn("couldn't find name $name anywhere!");
