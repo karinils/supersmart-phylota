@@ -124,6 +124,10 @@ sub get_id {
 	shift->gi;
 }
 
+sub id {
+	shift->gi;
+}
+
 sub get_taxon {
 	my $self = shift;
 	my $ti = $self->ti;

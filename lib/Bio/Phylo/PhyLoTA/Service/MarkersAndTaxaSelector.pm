@@ -55,7 +55,11 @@ sub get_nodes_for_names {
     my @nodes;
     
     # iterate over supplied names
-    for my $name ( @names ) {
+    NAME: for my $name ( @names ) {
+        if ( not $name ) {
+            $log->warn("can't search on name '$name', skipping");
+            next NAME;
+        }
         $log->info("going to search for name '$name'");
         
         # do we have an exact match?
@@ -68,7 +72,7 @@ sub get_nodes_for_names {
             # search the web service
             if ( my $id = $self->_do_tnrs_search($name) ) {
                $node = $self->find_node($id);
-               $log->info("found match for $name through TNRS");
+               $log->info("found match '$node' for $name through TNRS");
             }
             else {
                 $log->warn("couldn't find name $name anywhere!");
@@ -212,6 +216,36 @@ sub get_tree_for_nodes {
     return $tree;
 }
 
+=item taxa_are_disjoint
+
+Computes whether two array references of taxon IDs are non-overlapping (i.e.
+disjoint).
+
+=cut
+
+sub taxa_are_disjoint {
+    my ( $self, $set1, $set2 ) = @_;
+    my %set1 = map { $_ => 1 } map { ref $_ ? $_->ti : $_ } @{ $set1 };
+    my %set2 = map { $_ => 1 } map { ref $_ ? $_->ti : $_ } @{ $set2 };
+    
+    # check if any taxon from set1 occurs in set2
+    for my $t1 ( keys %set1 ) {
+        if ( $set2{$t1} ) {
+            return 0;
+        }
+    }
+    
+    # check if any taxon from set2 occurs in set1
+    for my $t2 ( keys %set2 ) {
+        if ( $set1{$t2} ) {
+            return 0;
+        }
+    }
+    
+    # the sets are disjoint, so return true
+    return 1;
+}
+
 =begin comment
 
 Private method for querying the TNRS web service
@@ -225,8 +259,9 @@ sub _do_tnrs_search {
     
     # do the request
     my $result = _fetch_url( $TNRS_URL . '?query=' . uri_escape( $name ) );
+    $log->debug("raw result: $result");
     my $obj = decode_json($result);
-    $log->debug("initial response: ".Dumper($obj));
+    $log->debug("parsed response: ".Dumper($obj));
     
     # start polling
     while(1) {
@@ -308,6 +343,7 @@ sub _fetch_url {
 	if ( $response->is_success or $response->code == 302 ) {
 		$log->info($response->status_line);
 		my $content = $response->decoded_content;
+        $log->info($content);
 		return $content;
 	}
 	else {

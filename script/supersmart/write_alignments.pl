@@ -39,12 +39,13 @@ else {
 	open my $fh, '<', $infile or die $!;
 	@names = <$fh>;
 	chomp(@names);
-	$log->info("read species names from $infile");
+	$log->info("read ".scalar(@names)." species names from $infile");
 }
 
 # this will take some time to do the taxonomic name resolution in the
 # database and with webservices
 my @nodes = $mts->get_nodes_for_names(@names);
+$log->info("found ".scalar(@nodes)." matches in NCBI taxonomy");
 
 # this is sorted from more to less inclusive
 my @clusters = $mts->get_clusters_for_nodes(@nodes);
@@ -59,7 +60,9 @@ for my $cl ( @clusters ) {
 	
 	# fetch ALL sequences for the cluster, reduce data set
 	my $sg = Bio::Phylo::PhyLoTA::Service::SequenceGetter->new;
-	my @seqs = $sg->filter_seq_set($sg->get_sequences_for_cluster_object($cl));
+	my @seqs    = $sg->filter_seq_set($sg->get_sequences_for_cluster_object($cl));
+	my $single  = $sg->single_cluster($cl);
+	my $seed_gi = $single->seed_gi;
 	$log->info("fetched ".scalar(@seqs)." sequences");
 	
 	# keep only the sequences for our taxa
@@ -89,7 +92,7 @@ for my $cl ( @clusters ) {
 			my $gi  = $row->get_name;
 			my $ti  = $sg->find_seq($gi)->ti;
 			my $seq = $row->get_char;
-			print $outfh "$ti\t$gi\t$seq\n";
+			print $outfh ">gi|${gi}|seed_gi|${seed_gi}|taxon|${ti}\n$seq\n";
 		});
 		
 		# done writing

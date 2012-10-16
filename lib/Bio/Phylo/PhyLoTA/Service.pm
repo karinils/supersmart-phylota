@@ -5,6 +5,7 @@ use Moose;
 use Bio::Phylo::PhyLoTA::DAO;
 use Bio::Phylo::PhyLoTA::Config;
 use Bio::Phylo::Util::Logger;
+use Bio::Phylo::Util::Exceptions 'throw';
 
 has 'schema'  => (
     'is'      => 'rw',
@@ -28,37 +29,92 @@ my $schema = Bio::Phylo::PhyLoTA::DAO->new;
 
 sub find_seq {
 	my ( $self, $gi ) = @_;
-	return $schema->resultset('Seq')->find($gi);
+	eval {
+		return $schema->resultset('Seq')->find($gi);
+	};
+	if ( $@ ) {
+		throw 'BadArgs' => $@;
+	}
 }
 
 sub search_seq {
 	my ( $self, $clause ) = @_;
-	return $schema->resultset('Seq')->search($clause);
+	eval {
+		return $schema->resultset('Seq')->search($clause);
+	};
+	if ( $@ ) {
+		throw 'BadArgs' => $@;
+	}
 }
 
 sub single_seq {
 	my ( $self, $clause ) = @_;
-	return $schema->resultset('Seq')->single($clause);	
+	eval {
+		return $schema->resultset('Seq')->single($clause);
+	};
+	if ( $@ ) {
+		throw 'BadArgs' => $@;
+	}	
 }
 
 sub find_node {
 	my ( $self, $ti ) = @_;
-	return $schema->resultset('Node')->find($ti);
+	eval {
+		return $schema->resultset('Node')->find($ti);
+	};
+	if ( $@ ) {
+		throw 'BadArgs' => $@;
+	}	
 }
 
 sub search_node {
 	my ( $self, $clause ) = @_;
-	return $schema->resultset('Node')->search($clause);
+	eval {
+		return $schema->resultset('Node')->search($clause);
+	};
+	if ( $@ ) {
+		throw 'BadArgs' => $@;
+	}	
 }
 
 sub single_node {
 	my ( $self, $clause ) = @_;
-	return $schema->resultset('Node')->single($clause);	
+	eval {
+		return $schema->resultset('Node')->single($clause);
+	};
+	if ( $@ ) {
+		throw 'BadArgs' => $@;
+	}	
+}
+
+sub single_cluster {
+	my ( $self, $clause ) = @_;
+	eval {
+		return $schema->resultset('Cluster')->single($clause);
+	};
+	if ( $@ ) {
+		throw 'BadArgs' => $@;
+	}	
 }
 
 sub search_ci_gi {
 	my ( $self, $clause ) = @_;
-	return $schema->resultset('CiGi')->search($clause);
+	eval {
+		return $schema->resultset('CiGi')->search($clause);
+	};
+	if ( $@ ) {
+		throw 'BadArgs' => $@;
+	}	
+}
+
+sub search_inparanoid {
+	my ( $self, $clause ) = @_;
+	eval {
+		return $schema->resultset('InParanoid')->search($clause);
+	};
+	if ( $@ ) {
+		throw 'BadArgs' => $@;
+	}	
 }
 
 1;

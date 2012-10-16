@@ -18,6 +18,8 @@ WriteMakefile(
 		'Moose'        => 0,
 		'Bio::Species' => 0,
 		'XML::Twig'    => 0,
+		'HTML::Parser' => 0,
+		'JSON'         => 0,
 	}
 );
 
