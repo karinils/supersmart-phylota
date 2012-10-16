@@ -42,8 +42,11 @@ commontree : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_COMMONTREE %]
 
 alignments : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_ALIGNMENTLIST %]
 
-[% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SUPERMATRIX %] : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_ALIGNMENTLIST %]
-	perl script/supersmart/concat_alignments.pl -l $< [% conf.SUPERSMART_VERBOSITY %] > $@
+[% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_MERGEDLIST %] : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_ALIGNMENTLIST %]
+	perl script/supersmart/merge_alignments.pl -l $< [% conf.SUPERSMART_VERBOSITY %] -s [% conf.SUPERSMART_MERGEDSTEM %] > $@
+
+[% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SUPERMATRIX %] : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_MERGEDLIST %]
+	perl script/supersmart/join_alignments.pl -l $< [% conf.SUPERSMART_VERBOSITY %] > $@
 
 supermatrix : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SUPERMATRIX %]
 
