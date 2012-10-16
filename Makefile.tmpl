@@ -18,13 +18,13 @@ schema : [% conf.SCHEMA_FILE %]
 dao :
 	perl -MDBIx::Class::Schema::Loader=make_schema_at,dump_to_dir:./lib \
 		-e 'make_schema_at("Bio::Phylo::PhyLoTA::DAO", \
-		{ db_schema => "phylota" }, \
+		{ db_schema => "phylota", overwrite_modifications => 1 }, \
 		[ "dbi:[% conf.RDBMS %]:dbname=[% conf.DATABASE %]", "[% conf.USER %]", "[% conf.PASS %]" ])'
 
 [% conf.DUMP_IN_FILE %] :
 	curl [% conf.DUMP_IN_URL %][% conf.DUMP_IN_CHUNKS %] > $@
 
-dldump : [% conf.DUMP_IN_FILE %]
+dl_dump : [% conf.DUMP_IN_FILE %]
 
 load_dump : [% conf.DUMP_IN_FILE %]
 	zcat $< | mysql -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %]
@@ -42,8 +42,11 @@ commontree : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_COMMONTREE %]
 
 alignments : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_ALIGNMENTLIST %]
 
-[% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SUPERMATRIX %] : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_ALIGNMENTLIST %]
-	perl script/supersmart/concat_alignments.pl -l $< [% conf.SUPERSMART_VERBOSITY %] > $@
+[% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_MERGEDLIST %] : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_ALIGNMENTLIST %]
+	perl script/supersmart/merge_alignments.pl -l $< [% conf.SUPERSMART_VERBOSITY %] -s [% conf.SUPERSMART_MERGEDSTEM %] > $@
+
+[% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SUPERMATRIX %] : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_MERGEDLIST %]
+	perl script/supersmart/join_alignments.pl -l $< [% conf.SUPERSMART_VERBOSITY %] > $@
 
 supermatrix : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SUPERMATRIX %]
 
@@ -68,17 +71,18 @@ manuscript : [% conf.DOC_DIR %][% conf.DOC_OUT_FILE %]
 [% conf.INPARANOID_SEQ_FILE %] :
 	curl [% conf.INPARANOID_SEQ_URL %] -o $@
 
-dl_inparanoid : [% conf.INPARANOID_SEQ_FILE %]
+dl_inparanoid_blast : [% conf.INPARANOID_SEQ_FILE %]
 
 [% conf.INPARANOID_LOG_FILE %] : [% conf.INPARANOID_SEQ_FILE %]
 	formatdb -i $< -l [% conf.INPARANOID_LOG_FILE %] -p T -o T
 
-inparanoid : [% conf.INPARANOID_LOG_FILE %]
+inparanoid_blast : [% conf.INPARANOID_LOG_FILE %]
 
 [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_GILIST %] :
 	mysql -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %] -B -e 'select gi from seqs' > $@
 
-[% conf.SUPERSMART_GI2AA_FILE %] : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_GILIST %]
-	cat $< | perl script/supersmart/write_prot_seq.pl [% conf.SUPERSMART_VERBOSITY %] > $@
+inparanoid_schema : [% conf.INPARANOID_SQL_FILE %]
+	cat $< | mysql -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %]
 
-gi2aa : [% conf.SUPERSMART_GI2AA_FILE %]
+dl_inparanoid_sql :
+	cd [% conf.INPARANOID_SQL_DIR %] && wget --recursive --no-directories --no-parent --accept sqltable.* --level=1 [% conf.INPARANOID_SQL_URL %] && cd -
