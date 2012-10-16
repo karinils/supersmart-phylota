@@ -191,7 +191,7 @@ for my $protid ( keys %matrices ) {
 				# accumulated all preceding files, and should therefore become
 				# the outfile
 				copy( $file[$i], $outfile );				
-				unlink @tmpfiles; # clean tmp files
+				# unlink @tmpfiles; # clean tmp files
 			}
 		}
 	}
