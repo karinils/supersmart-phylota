@@ -126,12 +126,14 @@ sub single_cluster {
 	# simple primary/foreign key relationship, but instead there is a compound
 	# key of cluster.ti_root,cluster.ci,cluster.cl_type that matches
 	# cigi.ti,cigi.clustid,cigi.cl_type
-	if ( my $value = $clause->{'clustid'} ) {
+	if ( exists $clause->{'clustid'} ) {
+		my $value = $clause->{'clustid'};
 		$clause->{'ci'} = $value;
 		delete $clause->{'clustid'};
 		$logger->info("search clause included 'clustid', changed this to 'ci'");
 	}
-	if ( my $value = $clause->{'ti'} ) {
+	if ( exists $clause->{'ti'} ) {
+		my $value = $clause->{'ti'};
 		$clause->{'ti_root'} = $value;
 		delete $clause->{'ti'};
 		$logger->info("search clause included 'ti', changed this to 'ti_root'");
@@ -158,12 +160,14 @@ sub search_ci_gi {
 	# simple primary/foreign key relationship, but instead there is a compound
 	# key of cluster.ti_root,cluster.ci,cluster.cl_type that matches
 	# cigi.ti,cigi.clustid,cigi.cl_type
-	if ( my $value = $clause->{'ci'} ) {
+	if ( exists $clause->{'ci'} ) {
+		my $value = $clause->{'ci'};
 		$clause->{'clustid'} = $value;
 		delete $clause->{'ci'};
 		$logger->info("search clause included 'ci', changed this to 'clustid'");
 	}
-	if ( my $value = $clause->{'ti_root'} ) {
+	if ( exists $clause->{'ti_root'} ) {
+		my $value = $clause->{'ti_root'};
 		$clause->{'ti'} = $value;
 		delete $clause->{'ti_root'};
 		$logger->info("search clause included 'ti_root', changed this to 'ti'");
