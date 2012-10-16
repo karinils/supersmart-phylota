@@ -364,7 +364,7 @@ sub get_sequences_for_cluster_object {
     my ($self,$cluster_object) = @_;
     
     # search CiGi table to fetch all GIs within this cluster
-    my $gis = $self->schema->resultset('CiGi')->search($cluster_object);
+    my $gis = $self->search_ci_gi($cluster_object);
 
     # this will hold the resulting sequences
     my @sequences;
@@ -373,7 +373,7 @@ sub get_sequences_for_cluster_object {
     while(my $gi = $gis->next){
 	
 	# look up sequence by it's unique id
-	my $seq = $self->schema->resultset('Seq')->find($gi->gi);
+	my $seq = $self->find_seq($gi->gi);
 	
 	# add sequence to results
 	push @sequences, $seq;
