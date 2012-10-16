@@ -3,12 +3,13 @@ use strict;
 use warnings;
 use File::Copy;
 use Getopt::Long;
-use Bio::Phylo::Util::Logger;
+use Bio::Phylo::Util::Logger ':levels';
 use Bio::Phylo::PhyLoTA::Service::MarkersAndTaxaSelector;
 use Bio::Phylo::PhyLoTA::Service::SequenceGetter;
 
 # process command line arguments
-my ( $list, $verbosity, $stem );
+my ( $list, $stem );
+my $verbosity = WARN;
 GetOptions(
 	'list=s'   => \$list,
 	'stem=s'   => \$stem,
