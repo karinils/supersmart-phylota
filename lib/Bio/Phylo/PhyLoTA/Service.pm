@@ -135,6 +135,23 @@ sub single_cluster {
 
 sub search_ci_gi {
 	my ( $self, $clause ) = @_;
+	
+	# this hack is necessary because of the strange way the cluster and ci_gi
+	# tables are designed. it would have been so much better if there was a
+	# simple primary/foreign key relationship, but instead there is a compound
+	# key of cluster.ti_root,cluster.ci,cluster.cl_type that matches
+	# cigi.ti,cigi.clustid,cigi.cl_type
+	if ( my $value = $clause->{'ci'} ) {
+		$clause->{'clustid'} = $value;
+		delete $clause->{'ci'};
+		$logger->info("search clause included 'ci', changed this to 'clustid'");
+	}
+	if ( my $value = $clause->{'ti_root'} ) {
+		$clause->{'ti'} = $value;
+		delete $clause->{'ti_root'};
+		$logger->info("search clause included 'ti_root', changed this to 'ti'");
+	}
+	
 	my $result;
 	eval {
 		$result = $schema->resultset('CiGi')->search($clause);
