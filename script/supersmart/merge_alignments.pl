@@ -3,12 +3,13 @@ use strict;
 use warnings;
 use File::Copy;
 use Getopt::Long;
-use Bio::Phylo::Util::Logger;
+use Bio::Phylo::Util::Logger ':levels';
 use Bio::Phylo::PhyLoTA::Service::MarkersAndTaxaSelector;
 use Bio::Phylo::PhyLoTA::Service::SequenceGetter;
 
 # process command line arguments
-my ( $list, $verbosity, $stem );
+my ( $list, $stem );
+my $verbosity = WARN;
 GetOptions(
 	'list=s'   => \$list,
 	'stem=s'   => \$stem,
@@ -57,7 +58,7 @@ for my $file ( @list ) {
 	
 	# do protein translation
 	if ( my $aa = $sg->get_aa_for_sequence($seed_gi) ) {
-		$log->debug("seed GI $seed_gi has protein translation");
+		$log->debug("seed GI $seed_gi has protein translation: $aa");
 		
 		# run blast
 		if ( my @hits = $sg->run_blast_search( '-seq' => $aa ) ) {
@@ -190,7 +191,7 @@ for my $protid ( keys %matrices ) {
 				# accumulated all preceding files, and should therefore become
 				# the outfile
 				copy( $file[$i], $outfile );				
-				unlink @tmpfiles; # clean tmp files
+				# unlink @tmpfiles; # clean tmp files
 			}
 		}
 	}
