@@ -88,9 +88,11 @@ for my $i ( 0 .. $#protids ) {
 	# the hash shrinks as we get farther into the loop, so we need to check
 	# to make sure it still makes sense to do the pairwise comparison
 	if ( $matrices{$p1} ) {
+		$log->info("going to cluster InParanoid protein ID $p1");
 	
 		# fetch inparanoid result set 1
 		my @irs1 = $sg->search_inparanoid({ 'protid' => $p1 })->all;
+		$log->debug("fetched ".scalar(@irs1). " InParanoid records for $p1");
 		
 		# we start at $i + 1 so that we only do the pairwise comparison
 		# in one direction
@@ -99,9 +101,11 @@ for my $i ( 0 .. $#protids ) {
 			
 			# again, this may have shrunk too
 			if ( $matrices{$p2} ) {
+				$log->debug("going to assess if $p1 and $p2 are orthologous");
 				
 				# fetch inparanoid result set 2
 				my @irs2 = $sg->search_inparanoid({ 'protid' => $p2 })->all;
+				$log->debug("fetched ".scalar(@irs2). " InParanoid records for $p2");
 				
 				# the inparanoid tables have multiple occurrences of each
 				# protein ID, namely for each pairwise comparison between
@@ -114,6 +118,7 @@ for my $i ( 0 .. $#protids ) {
 						# because they are being compared, and that the
 						# bootstrap value of the comparison is 100%
 						if ( $irs1[$k]->is_orthologous($irs2[$l]) ) {
+							$log->info("$p1 and $p2 are orthologous");
 							
 							# append the matrix or matrices from inparanoid
 							# protein ID 1 to the ones from ID 1
@@ -141,6 +146,7 @@ for my $protid ( keys %matrices ) {
 	
 	# fetch list of file names orthologous with that protid
 	my @file = @{ $matrices{$protid} };
+	$log->info("there are ".scalar(@file)." clusters orthologous with $protid");
 	
 	# the files in the list will become a profile-profile MSA under this name
 	my $outfile = "${stem}-${protid}.fa";
@@ -155,24 +161,50 @@ for my $protid ( keys %matrices ) {
 			# two infiles in the next step
 			if ( $file[$i + 1] ) {
 				my $tmpfile = "${outfile}.tmp.${i}";
+				$log->info("aligning ".$file[$i]." and ".$file[$i + 1]." to $tmpfile");
+				
+				# perhaps this is better done using bioperl-run's alignment
+				# wrapper - except we don't need to read the results in this
+				# script and we had some problems with the wrapper elsewhere
+				# (particularly with the -profile flag) so we'll just do the
+				# invocation directly.
 				system(
 					'muscle' => '-profile',
 					'-in1'   => $file[$i],
 					'-in2'   => $file[$i + 1],
 					'-out'   => $tmpfile,
+					'-quiet',
 				);
+				
+				# by doing this the result of the current alignment becomes
+				# -in1 for the next iteration
 				$file[$i + 1] = $tmpfile;
+				
+				# this so that we can clean up the temp files
 				push @tmpfiles, $tmpfile;
 			}
 			else {
-				copy( $file[$i], $outfile );
-				unlink @tmpfiles;
+				
+				# if there is no $file[$i + 1], it means that $file[$i] was
+				# the alignment result of the previous iteration, which has
+				# accumulated all preceding files, and should therefore become
+				# the outfile
+				copy( $file[$i], $outfile );				
+				unlink @tmpfiles; # clean tmp files
 			}
 		}
 	}
 	else {
 		copy( $file[0], $outfile );
 	}
+	
+	# we print out the resulting merged alignment's name, so that we can re-
+	# direct these names into a listing that can become the input for the next
+	# script, which will join the alignments on taxon IDs.
+	print $outfile, "\n";
+	
+	# done
+	$log->info("created merged alignment $outfile");
 }
 
 # reads the seed GI, which is in the FASTA definition line 
