@@ -39,12 +39,13 @@ else {
 	open my $fh, '<', $infile or die $!;
 	@names = <$fh>;
 	chomp(@names);
-	$log->info("read species names from $infile");
+	$log->info("read ".scalar(@names)." species names from $infile");
 }
 
 # this will take some time to do the taxonomic name resolution in the
 # database and with webservices
 my @nodes = $mts->get_nodes_for_names(@names);
+$log->info("found ".scalar(@nodes)." matches in NCBI taxonomy");
 
 # this is sorted from more to less inclusive
 my @clusters = $mts->get_clusters_for_nodes(@nodes);
