@@ -255,8 +255,9 @@ sub _do_tnrs_search {
     
     # do the request
     my $result = _fetch_url( $TNRS_URL . '?query=' . uri_escape( $name ) );
+    $log->debug("raw result: $result");
     my $obj = decode_json($result);
-    $log->debug("initial response: ".Dumper($obj));
+    $log->debug("parsed response: ".Dumper($obj));
     
     # start polling
     while(1) {
