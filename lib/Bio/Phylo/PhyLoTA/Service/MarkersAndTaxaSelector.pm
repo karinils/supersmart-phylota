@@ -55,7 +55,11 @@ sub get_nodes_for_names {
     my @nodes;
     
     # iterate over supplied names
-    for my $name ( @names ) {
+    NAME: for my $name ( @names ) {
+        if ( not $name ) {
+            $log->warn("can't search on name '$name', skipping");
+            next NAME;
+        }
         $log->info("going to search for name '$name'");
         
         # do we have an exact match?
