@@ -116,15 +116,15 @@ sub get_clusters_for_nodes {
         $log->debug("finding clusters for ".$node->ti);
         
         # find ci_gi intersection records for this node's ti
-        my @cigis = $self->search_ci_gi({ ti_of_gi => $node->ti });
+        my @cigis = $self->search_ci_gi({ ti_of_gi => $node->ti })->all;
         
         # iterate over matches
         for my $cigi ( @cigis ) {
             
             # store these for re-use: their combination is the composite
-            # key for fetch clusters from the clusters table
-            my $ti      = $cigi->ti;
-            my $clustid = $cigi->clustid;
+            # key to fetch clusters from the clusters table
+            my $ti      = $cigi->ti; # this is not the input taxon id, but cluster.ti_root
+            my $clustid = $cigi->clustid; # this is the same as cluster.ci
             my $cl_type = $cigi->cl_type;
             $log->debug("ti => $ti, clustid => $clustid, cl_type => $cl_type");
             
@@ -144,8 +144,8 @@ sub get_clusters_for_nodes {
     # schwartzian transform
     return
     map {{
-        'ti'      => $_->{ti},
-        'clustid' => $_->{clustid},
+        'ti_root' => $_->{ti},
+        'ci'      => $_->{clustid},
         'cl_type' => $_->{cl_type},
     }}
     sort {

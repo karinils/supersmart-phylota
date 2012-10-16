@@ -120,16 +120,48 @@ sub write_nexus {
 sub parse_matrix {
 	my $file = shift;
 	my ( %matrix, $current );
+	
+	# open file handle 
 	open my $fh, '<', $file or die $!;
+	$log->info("going to read sequences from FASTA file $file");
+	
+	# read over the file handle
 	while(<$fh>) {
-		chomp;
+		chomp; # strip line ending
+		
+		# this matches the FASTA definition line, we capture the taxon ID
 		if ( />.*taxon\|(\d+)/ ) {
 			$current = $1;
+			$log->debug("found taxon ID $current");
+			
+			# we have already seen this ID, now we're seeing it for the
+			# second (or more) time.
+			if ( $matrix{$current} ) {
+				$log->debug("already seen $current, starting new empty string");
+				push @{ $matrix{$current} }, '';
+			}
+			
+			# this is the first time we see the taxon ID
+			else {
+				$log->debug("not yet seet $current, initializing array with an empty string");
+				$matrix{$current} = [ '' ];
+			}
 		}
-		else {
+		else {			
 			s/\s//g;
-			$matrix{$current} .= $_;
+			$matrix{$current}->[-1] .= $_;
 		}
+	}
+	
+	# now we're going to reduce the sequence set to use only the longest
+	# sequence in the set for that taxon ID
+	$log->info("going to select longest sequence from among within-species sequences");
+	for my $taxon_id ( keys %matrix ) {
+		my @sequences = @{ $matrix{$taxon_id} };
+		
+		# we sort in ascending order from fewer to more gaps
+		my @sorted = sort { $a =~ tr/-/-/ <=> $b =~ tr/-/-/ } @sequences;
+		$matrix{$taxon_id} = $sorted[0];
 	}
 	return %matrix;
 }

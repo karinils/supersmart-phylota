@@ -4,6 +4,7 @@ package Bio::Phylo::PhyLoTA::Service::SequenceGetter; # maybe this should be Seq
 use strict;
 use warnings;
 use Moose;
+use Data::Dumper;
 use Bio::SeqIO;
 use Bio::DB::GenBank;
 use Bio::Tools::Run::Alignment::Muscle;
@@ -200,18 +201,23 @@ results, i.e. InParanoid objects, for which $r1->is_orthologous($r2) is true.
 
 sub run_blast_search {
 	my ( $self, %args ) = @_;
+	my $log = $self->logger;
 	
 	# provide default database: the inparanoid FASTA file
 	if ( not $args{'-database'} ) {
-		$args{'-database'} = $self->config->INPARANOID_SEQ_FILE;
+		$args{'-database'} = $self->config->INPARANOID_SEQ_FILE;		
 	}
+	$log->info("using database $args{'-database'}");
 	
 	# default is protein blast, nucleotide blast is 'blastn';
 	if ( not $args{'-program'} ) {
 		$args{'-program'} = 'blastp';
 	}
+	$log->info("using program $args{'-program'}");
 	
+	# instantiate standalone blast wrapper
 	my $blast = Bio::Tools::Run::StandAloneBlast->new(%args);
+	$log->info("instantiate standalone blast");
 	
 	# need -seq argument
 	if ( not $args{'-seq'} ) {
@@ -223,14 +229,31 @@ sub run_blast_search {
 				'-id'  => 'DUMMY',
 				'-seq' => $args{'-seq'}
 			);
+			$log->info("seq argument was a raw string, created a dummy object");
+		}
+		else {
+			$log->info("seq argument was an object");
 		}
 		
-		# these will be InParanoid database objects		
-		my @hits;
+		# here we actually invoke the blast executables
 		my $report = $blast->blastall( $args{'-seq'} );
+		$log->info("ran blastall");
+		
+		# these will be InParanoid database objects		
+		my @hits;		
 		while ( my $result = $report->next_result() ) {
+			$log->info("iterating over result $result");
+			
+			# there should be just one result with several hits
 			while ( my $hit = $result->next_hit() ) {
-				push @hits, $self->search_inparanoid({ 'protid' => $hit->name });
+				if ( my $name = $hit->name ) {
+					
+					# local BLAST seems to add these at the end of the accession
+					$name =~ s/_+spec_id_\d+$//;
+					$log->info("iterating over hit $hit");
+					$log->info("hit name is: $name");
+					push @hits, $self->search_inparanoid({ 'protid' => $name });
+				}
 			}
 		}
 		return @hits;
@@ -364,7 +387,7 @@ sub get_sequences_for_cluster_object {
     my ($self,$cluster_object) = @_;
     
     # search CiGi table to fetch all GIs within this cluster
-    my $gis = $self->schema->resultset('CiGi')->search($cluster_object);
+    my $gis = $self->search_ci_gi($cluster_object);
 
     # this will hold the resulting sequences
     my @sequences;
@@ -373,7 +396,7 @@ sub get_sequences_for_cluster_object {
     while(my $gi = $gis->next){
 	
 	# look up sequence by it's unique id
-	my $seq = $self->schema->resultset('Seq')->find($gi->gi);
+	my $seq = $self->find_seq($gi->gi);
 	
 	# add sequence to results
 	push @sequences, $seq;
@@ -396,7 +419,7 @@ sub get_smallest_cluster_object_for_sequence{
     my $log=$self->logger;
     
     # search CiGi table for all subtree clusters that include provided gi
-    my $cigis = $self->schema->resultset('CiGi')->search({ gi => $gi, cl_type => "subtree" });
+    my $cigis = $self->search_ci_gi({ gi => $gi, cl_type => "subtree" });
     
     # clusterid for least inclusive cluster
     my $smallestcluster;
