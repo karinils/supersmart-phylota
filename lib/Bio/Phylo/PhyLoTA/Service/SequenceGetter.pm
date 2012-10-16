@@ -396,7 +396,7 @@ sub get_smallest_cluster_object_for_sequence{
     my $log=$self->logger;
     
     # search CiGi table for all subtree clusters that include provided gi
-    my $cigis = $self->schema->resultset('CiGi')->search({ gi => $gi, cl_type => "subtree" });
+    my $cigis = $self->search_ci_gi({ gi => $gi, cl_type => "subtree" });
     
     # clusterid for least inclusive cluster
     my $smallestcluster;
