@@ -46,7 +46,7 @@ alignments : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_ALIGNMENTLIST %]
 	perl script/supersmart/merge_alignments.pl -l $< [% conf.SUPERSMART_VERBOSITY %] -s [% conf.SUPERSMART_MERGEDSTEM %] > $@
 
 [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SUPERMATRIX %] : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_MERGEDLIST %]
-	perl script/supersmart/join_alignments.pl -l $< [% conf.SUPERSMART_VERBOSITY %] > $@
+	perl script/supersmart/join_alignments.pl -l $< [% conf.SUPERSMART_VERBOSITY %] --nexus > $@
 
 supermatrix : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SUPERMATRIX %]
 
