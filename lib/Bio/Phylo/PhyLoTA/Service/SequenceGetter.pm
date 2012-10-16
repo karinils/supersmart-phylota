@@ -246,12 +246,14 @@ sub run_blast_search {
 			
 			# there should be just one result with several hits
 			while ( my $hit = $result->next_hit() ) {
-				$log->info("iterating over hit $hit");
-				$log->info("hit name is: ".$hit->name);
-				$log->debug(Dumper($hit));
-				
-				# XXX maybe we need to pre-process the hit name?
-				push @hits, $self->search_inparanoid({ 'protid' => $hit->name });
+				if ( my $name = $hit->name ) {
+					
+					# local BLAST seems to add these at the end of the accession
+					$name =~ s/_+spec_id_\d+$//;
+					$log->info("iterating over hit $hit");
+					$log->info("hit name is: $name");
+					push @hits, $self->search_inparanoid({ 'protid' => $name });
+				}
 			}
 		}
 		return @hits;
