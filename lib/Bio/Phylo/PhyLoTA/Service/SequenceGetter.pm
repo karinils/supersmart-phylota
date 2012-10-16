@@ -200,18 +200,23 @@ results, i.e. InParanoid objects, for which $r1->is_orthologous($r2) is true.
 
 sub run_blast_search {
 	my ( $self, %args ) = @_;
+	my $log = $self->logger;
 	
 	# provide default database: the inparanoid FASTA file
 	if ( not $args{'-database'} ) {
-		$args{'-database'} = $self->config->INPARANOID_SEQ_FILE;
+		$args{'-database'} = $self->config->INPARANOID_SEQ_FILE;		
 	}
+	$log->info("using database $args{'-database'}");
 	
 	# default is protein blast, nucleotide blast is 'blastn';
 	if ( not $args{'-program'} ) {
 		$args{'-program'} = 'blastp';
 	}
+	$log->info("using program $args{'-program'}");
 	
+	# instantiate standalone blast wrapper
 	my $blast = Bio::Tools::Run::StandAloneBlast->new(%args);
+	$log->info("instantiate standalone blast");
 	
 	# need -seq argument
 	if ( not $args{'-seq'} ) {
@@ -223,13 +228,27 @@ sub run_blast_search {
 				'-id'  => 'DUMMY',
 				'-seq' => $args{'-seq'}
 			);
+			$log->info("seq argument was a raw string, created a dummy object");
+		}
+		else {
+			$log->info("seq argument was an object");
 		}
 		
-		# these will be InParanoid database objects		
-		my @hits;
+		# here we actually invoke the blast executables
 		my $report = $blast->blastall( $args{'-seq'} );
+		$log->info("ran blastall");
+		
+		# these will be InParanoid database objects		
+		my @hits;		
 		while ( my $result = $report->next_result() ) {
+			$log->info("iterating over result $result");
+			
+			# there should be just one result with several hits
 			while ( my $hit = $result->next_hit() ) {
+				$log->info("iterating over hit $hit");
+				$log->info("hit name is: ".$hit->name);
+				
+				# XXX maybe we need to pre-process the hit name?
 				push @hits, $self->search_inparanoid({ 'protid' => $hit->name });
 			}
 		}
