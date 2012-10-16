@@ -1,15 +1,17 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
+use File::Copy;
 use Getopt::Long;
 use Bio::Phylo::Util::Logger;
 use Bio::Phylo::PhyLoTA::Service::MarkersAndTaxaSelector;
 use Bio::Phylo::PhyLoTA::Service::SequenceGetter;
 
 # process command line arguments
-my ( $list, $verbosity );
+my ( $list, $verbosity, $stem );
 GetOptions(
 	'list=s'   => \$list,
+	'stem=s'   => \$stem,
 	'verbose+' => \$verbosity,
 );
 
@@ -28,7 +30,7 @@ my $sg  = Bio::Phylo::PhyLoTA::Service::SequenceGetter->new;
 # read list of files
 my @list;
 {
-	my $fh;
+	my $fh; # file handle
 	
 	# may also read from STDIN, this so that we can pipe 
 	if ( $list eq '-' ) {
@@ -40,12 +42,12 @@ my @list;
 		$log->debug("going to read file names from $list");
 	}
 	
-	# slurp contents
+	# read lines into array
 	@list = <$fh>;
 	chomp @list;
 }
 
-# first read all the matrices
+# iterate over list of file names
 my %matrices;
 for my $file ( @list ) {
 
@@ -60,7 +62,7 @@ for my $file ( @list ) {
 		# run blast
 		if ( my @hits = $sg->run_blast_search( '-seq' => $aa ) ) {
 			
-			# store matrix under protid of best inparanoid hit
+			# store file name under protid of best inparanoid hit
 			if ( $hits[0] and $hits[0]->count > 0 ) {
 				$log->debug("seed GI $seed_gi has BLAST hits");
 				
@@ -133,6 +135,45 @@ there is more than one (perhaps iteratively so) until there are only singletons
 left, which are concatenated and joined in taxon IDs
 
 =cut
+
+# iterate over InParanoid protein IDs
+for my $protid ( keys %matrices ) {
+	
+	# fetch list of file names orthologous with that protid
+	my @file = @{ $matrices{$protid} };
+	
+	# the files in the list will become a profile-profile MSA under this name
+	my $outfile = "${stem}-${protid}.fa";
+	
+	# check to see there are actually multiple files to align
+	if ( @file > 1 ) {
+		my @tmpfiles;
+		for my $i ( 0 .. $#file ) {
+			
+			# we want to grow the profile alignment cumulatively, so for each
+			# steo we create a temporary outfile that becomes the first of the
+			# two infiles in the next step
+			if ( $file[$i + 1] ) {
+				my $tmpfile = "${outfile}.tmp.${i}";
+				system(
+					'muscle' => '-profile',
+					'-in1'   => $file[$i],
+					'-in2'   => $file[$i + 1],
+					'-out'   => $tmpfile,
+				);
+				$file[$i + 1] = $tmpfile;
+				push @tmpfiles, $tmpfile;
+			}
+			else {
+				copy( $file[$i], $outfile );
+				unlink @tmpfiles;
+			}
+		}
+	}
+	else {
+		copy( $file[0], $outfile );
+	}
+}
 
 # reads the seed GI, which is in the FASTA definition line 
 sub read_seed_gi {
