@@ -3,6 +3,7 @@
 package Bio::Phylo::PhyLoTA::Service::FossilDataGetter;
 use strict;
 use warnings;
+use Bio::Phylo::PhyLoTA::Domain::FossilData;
 
 =head1 TITLE
 
@@ -27,6 +28,26 @@ sub new {
     return $self;
 }
 
+sub read_fossil_table {
+    my ( $self, $file ) = @_;    
+    open my $fh, '<', $file or die $!;
+    my ( @records, @header );
+    LINE: while(<$fh>) {
+        chomp;
+        my @fields = split /\t/, $_;
+        if ( not @header ) {
+            @header = @fields;
+            next LINE;
+        }
+        if ( @fields ) {
+            my %record;
+            $record{$header[$_]} = $fields[$_] for 0 .. $#header;
+            push @records, Bio::Phylo::PhyLoTA::Domain::FossilData->new(\%record);
+        }
+    }
+    close $fh;
+    return @records;
+}
 
 1;
 

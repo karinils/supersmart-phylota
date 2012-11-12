@@ -15,6 +15,11 @@ taxonomy : [% conf.GB_TAXONOMY_DIR %]/names.dmp [% conf.GB_TAXONOMY_DIR %]/nodes
 schema : [% conf.SCHEMA_FILE %]
 	mysql -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %] < $<
 
+db_setup :
+	mysql -e "create user '[% conf.USER %]'@'localhost' identified by '[% conf.PASS %]';"
+	mysql -e "create database [% conf.DATABASE %];"
+	mysql -e "grant all privileges on [% conf.DATABASE %].* to '[% conf.USER %]'@'localhost';"
+
 dao :
 	perl -MDBIx::Class::Schema::Loader=make_schema_at,dump_to_dir:./lib \
 		-e 'make_schema_at("Bio::Phylo::PhyLoTA::DAO", \
@@ -27,7 +32,7 @@ dao :
 dl_dump : [% conf.DUMP_IN_FILE %]
 
 load_dump : [% conf.DUMP_IN_FILE %]
-	zcat $< | mysql -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %]
+	gunzip -c $< | mysql -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %]
 
 [% conf.DUMP_OUT_FILE %].gz :
 	mysqldump -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %] | gzip -9 > $@

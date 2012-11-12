@@ -7,26 +7,15 @@ use Bio::Phylo::PhyLoTA::Config;
 use Bio::Phylo::Util::Logger;
 use Bio::Phylo::Util::Exceptions 'throw';
 
-has 'schema'  => (
-    'is'      => 'rw',
-    'isa'     => 'Bio::Phylo::PhyLoTA::DAO',
-    'default' => sub { Bio::Phylo::PhyLoTA::DAO->new },
-);
-
-has 'config'  => (
-    'is'      => 'rw',
-    'isa'     => 'Bio::Phylo::PhyLoTA::Config',
-    'default' => sub { Bio::Phylo::PhyLoTA::Config->new },
-);
-
-has 'logger'  => (
-    'is'      => 'rw',
-    'isa'     => 'Bio::Phylo::Util::Logger',
-    'default' => sub { Bio::Phylo::Util::Logger->new },
-);
-
+my $config = Bio::Phylo::PhyLoTA::Config->new;
 my $schema = Bio::Phylo::PhyLoTA::DAO->new;
 my $logger = Bio::Phylo::Util::Logger->new;
+
+sub schema { $schema }
+
+sub config { $config }
+
+sub logger { $logger }
 
 sub find_seq {
 	my ( $self, $gi ) = @_;
