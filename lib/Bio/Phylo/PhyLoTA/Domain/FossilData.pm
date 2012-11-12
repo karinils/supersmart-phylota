@@ -4,10 +4,22 @@ package Bio::Phylo::PhyLoTA::Domain::FossilData;
 use strict;
 use warnings;
 
+our $AUTOLOAD;
+
 sub new {
     my $class = shift;
-    my $self = bless {}, $class;
+    my $self = shift || bless {}, $class;
     return $self;
+}
+
+sub AUTOLOAD {
+    my $self = shift;
+    my $method = $AUTOLOAD;
+    $method =~ s/.+://;
+    if ( @_ ) {
+        $self->{$method} = shift;
+    }
+    return $self->{$method};
 }
 
 
@@ -19,7 +31,8 @@ Bio::Phylo::PhyLoTA::Domain::FossilData - Fossil Data
 
 =head1 DESCRIPTION
 
-Table with taxon, fossil_ages [1...n].
+Object that represents a fossil datum that is instantiated from a row in a file
+such as in $config->FOSSIL_TABLE_FILE
 
 =cut
 
