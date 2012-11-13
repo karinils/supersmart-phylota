@@ -83,9 +83,6 @@ dl_inparanoid_blast : [% conf.INPARANOID_SEQ_FILE %]
 
 inparanoid_blast : [% conf.INPARANOID_LOG_FILE %]
 
-[% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_GILIST %] :
-	mysql -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %] -B -e 'select gi from seqs' > $@
-
 inparanoid_schema : [% conf.INPARANOID_SQL_FILE %]
 	cat $< | mysql -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %]
 
