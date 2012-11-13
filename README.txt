@@ -1,9 +1,29 @@
-In this pipeline data from major biological databases, for instance sequences from
-GenBank (www.ncbi.nlm.nih.gov), species distribution data from GBIF (www.gbif.org),
-climatic data from BioClim (www.worldclim.org), and fossil records from Paleobiology
-(http://paleodb.org), are merged and used to perform phylogenetic analyses resulting
-in big trees of metazoa, plants and funghi, which can be used for meta-analyses.
+PRE-REQUISITES
 
-The overall purpose of the phylota pipeline is to infer large-scale evolutionary
-patterns, which in turn can help improve our understanding of the historical assembly
-of biomes, and the response of biodiversity to past episodes of climate change.
+The pipeline depends on a number of additional CPAN modules. These are listed in
+http://search.cpan.org/dist/Bundle-Bio-Phylo-PhyLoTA/, so that they can all (in
+principle) be installed using:
+
+$ perl -MCPAN -e 'install Bundle::Bio::Phylo::PhyLoTA'
+
+That said, some of these installs (e.g. bioperl-live, bioperl-run, DBD::mysql)
+may be more complicated than that. Consult their respective documentation or
+seek help from your sysadmin.
+
+In addition to these CPAN modules, there's a number of compiled 3rd party
+executables that either need to be in your system's PATH or specified in the
+config file (see below):
+
+- muscle
+- examl
+- parser
+- phytime
+- formatdb
+- blastall
+
+CONFIGURATION
+
+The pipeline API has a single point of configuration: the conf/phylota.ini file.
+Locations of 3rd party executables, run-time parameters, input and output file
+names etc. are defined there (and only there).
+
