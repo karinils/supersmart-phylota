@@ -165,6 +165,12 @@ This fetches the amino acid sequence (if any) for the provided nucleotide GI.
 sub get_aa_for_sequence {
 	my ($self,$gi) = @_;
 	my $gb = Bio::DB::GenBank->new;
+	
+	# see Bio::DB::WebDBSeqI, this needs to be set to string because otherwise
+	# we fork a new process, and these forked children aren't being cleaned up so
+	# they accumulate over time
+	$gb->retrieval_type('io_string');
+	
 	if ( my $seq = $gb->get_Seq_by_gi($gi) ) {
 		
 		# iterate over sequence features
