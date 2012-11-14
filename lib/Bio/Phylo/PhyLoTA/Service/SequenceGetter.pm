@@ -5,6 +5,7 @@ use strict;
 use warnings;
 use Moose;
 use Data::Dumper;
+use File::Temp 'tempfile';
 use Bio::SeqIO;
 use Bio::DB::GenBank;
 use Bio::Tools::Run::Alignment::Muscle;
@@ -164,6 +165,12 @@ This fetches the amino acid sequence (if any) for the provided nucleotide GI.
 sub get_aa_for_sequence {
 	my ($self,$gi) = @_;
 	my $gb = Bio::DB::GenBank->new;
+	
+	# see Bio::DB::WebDBSeqI, this needs to be set to string because otherwise
+	# we fork a new process, and these forked children aren't being cleaned up so
+	# they accumulate over time
+	$gb->retrieval_type('io_string');
+	
 	if ( my $seq = $gb->get_Seq_by_gi($gi) ) {
 		
 		# iterate over sequence features
@@ -203,62 +210,59 @@ sub run_blast_search {
 	my ( $self, %args ) = @_;
 	my $log = $self->logger;
 	
-	# provide default database: the inparanoid FASTA file
-	if ( not $args{'-database'} ) {
-		$args{'-database'} = $self->config->INPARANOID_SEQ_FILE;		
-	}
-	$log->info("using database $args{'-database'}");
-	
-	# default is protein blast, nucleotide blast is 'blastn';
-	if ( not $args{'-program'} ) {
-		$args{'-program'} = 'blastp';
-	}
-	$log->info("using program $args{'-program'}");
-	
-	# instantiate standalone blast wrapper
-	my $blast = Bio::Tools::Run::StandAloneBlast->new(%args);
-	$log->info("instantiate standalone blast");
-	
-	# need -seq argument
+	# at a minimum, we must have a -seq argument
 	if ( not $args{'-seq'} ) {
 		throw 'BadArgs' => "need -seq argument";
 	}
-	else {
-		if ( not ref $args{'-seq'} ) {
-			$args{'-seq'} = Bio::Seq->new(
-				'-id'  => 'DUMMY',
-				'-seq' => $args{'-seq'}
-			);
-			$log->info("seq argument was a raw string, created a dummy object");
-		}
-		else {
-			$log->info("seq argument was an object");
-		}
+	
+	# need the seq as a raw string, not an object, so check to see if it's
+	# a reference. If it is, call the ->seq method to get the raw data.
+	# otherwise, just copy the value (i.e. the seq string).
+	my $seq = ref $args{'-seq'} ? $args{'-seq'}->seq : $args{'-seq'};
+	
+	# create a temporary file with the sequence
+	my ( $fh, $filename ) = tempfile();
+	print $fh ">DUMMY\n$seq\n";
+	close $fh;
+	
+	# construct blastall command line arguments
+	my @cmd = (
+		$self->config->BLASTALL_BIN,
+		'-i' => $filename,
+		'-p' => $args{'-program'}  || 'blastp',
+		'-d' => $args{'-database'} || $self->config->INPARANOID_SEQ_FILE,
+		'2>' => '/dev/null',
+	);
+	$log->info("will run blast as '@cmd'");
+	
+	# now run blast
+	my $result = `@cmd`;
+	unlink $filename;
+	$log->debug("ran blast with result $result");
+	
+	# open a handle so we can instantiate Bio::SearchIO
+	open my $out, '<', \$result;
 		
-		# here we actually invoke the blast executables
-		my $report = $blast->blastall( $args{'-seq'} );
-		$log->info("ran blastall");
+	# these will be InParanoid database objects		
+	my @hits;
+	my $report = Bio::SearchIO->new( '-format' => 'blast', '-fh' => $out );
+	while ( my $result = $report->next_result() ) {
+		$log->info("iterating over result $result");
 		
-		# these will be InParanoid database objects		
-		my @hits;		
-		while ( my $result = $report->next_result() ) {
-			$log->info("iterating over result $result");
-			
-			# there should be just one result with several hits
-			while ( my $hit = $result->next_hit() ) {
-				if ( my $name = $hit->name ) {
-					
-					# local BLAST seems to add these at the end of the accession
-					$name =~ s/_+spec_id_\d+$//;
-					$log->info("iterating over hit $hit");
-					$log->info("hit name is: $name");
-					push @hits, $self->search_inparanoid({ 'protid' => $name });
-				}
+		# there should be just one result with several hits
+		while ( my $hit = $result->next_hit() ) {
+			if ( my $name = $hit->name ) {
+				
+				# there are odd suffixes in the file we downloaded from
+				# inparanoid
+				$name =~ s/_+spec_id_\d+$//;
+				$log->info("iterating over hit $hit");
+				$log->info("hit name is: $name");
+				push @hits, $self->search_inparanoid({ 'protid' => $name });
 			}
 		}
-		return @hits;
 	}
-	
+	return @hits;	
 }
 
 =item get_largest_cluster_for_sequence
