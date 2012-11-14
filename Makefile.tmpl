@@ -66,7 +66,10 @@ constraint : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_RAXMLCON %]
 [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_RAXML_RESULT %] : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_RAXMLCON %] [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_BIN_SUPERMATRIX %].binary
 	cd [% conf.SUPERSMART_WORKDIR %] && [% conf.SUPERSMART_RAXML %] [% conf.SUPERSMART_RAXML_ARGS %] -s [% conf.SUPERSMART_BIN_SUPERMATRIX %].binary -t [% conf.SUPERSMART_RAXMLCON %] -n [% conf.SUPERSMART_RAXML_RESULT %]
 
-examl : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_RAXML_RESULT %]
+megatree : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_RAXML_RESULT %]
+
+chronogram : 
+	echo "not implemented yet"
 
 [% conf.DOC_DIR %][% conf.DOC_OUT_FILE %] : [% conf.DOC_DIR %][% conf.DOC_IN_FILE %]
 	cd [% conf.DOC_DIR %] && latex [% conf.DOC_IN_FILE %]
