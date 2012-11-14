@@ -89,7 +89,7 @@ for my $file ( @list ) {
 		}
 	};
 	if ( $@ ) {
-		$log->warn("couldn't fetch AA for sequence $seed_gi from file $file");
+		$log->warn("couldn't fetch AA for sequence $seed_gi from file $file: $@");
 	}
 }
 
