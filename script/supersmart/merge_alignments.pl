@@ -50,32 +50,46 @@ my @list;
 
 # iterate over list of file names
 my %matrices;
+my %protid_for_seed_gi;
 for my $file ( @list ) {
 
 	# read seed gi from alignment
 	my $seed_gi = read_seed_gi($file);
 	$log->debug("read seed GI $seed_gi from file $file");
 	
+	# have seen this already
+	if ( my $protid = $protid_for_seed_gi{$seed_gi} ) {
+		$log->warn("already seen $seed_gi, found prot id $protid");
+		push @{ $matrices{$protid} }, $file;
+	}
+	
 	# do protein translation
-	if ( my $aa = $sg->get_aa_for_sequence($seed_gi) ) {
-		$log->debug("seed GI $seed_gi has protein translation: $aa");
-		
-		# run blast
-		if ( my @hits = $sg->run_blast_search( '-seq' => $aa ) ) {
+	eval {
+		if ( my $aa = $sg->get_aa_for_sequence($seed_gi) ) {
+			$log->debug("seed GI $seed_gi has protein translation: $aa");
 			
-			# store file name under protid of best inparanoid hit
-			if ( $hits[0] and $hits[0]->count > 0 ) {
-				$log->debug("seed GI $seed_gi has BLAST hits");
+			# run blast
+			if ( my @hits = $sg->run_blast_search( '-seq' => $aa ) ) {
 				
-				# fetch and store protein id
-				my $protid = $hits[0]->next->protid;
-				$log->debug("seed GI $seed_gi has best hit $protid");
-				if ( not $matrices{$protid} ) {
-					$matrices{$protid} = [];
+				# store file name under protid of best inparanoid hit
+				if ( $hits[0] and $hits[0]->count > 0 ) {
+					$log->debug("seed GI $seed_gi has BLAST hits");
+					
+					# fetch and store protein id
+					my $protid = $hits[0]->next->protid;
+					$protid_for_seed_gi{$seed_gi} = $protid;
+					
+					$log->debug("seed GI $seed_gi has best hit $protid");
+					if ( not $matrices{$protid} ) {
+						$matrices{$protid} = [];
+					}
+					push @{ $matrices{$protid} }, $file;
 				}
-				push @{ $matrices{$protid} }, $file;
 			}
 		}
+	};
+	if ( $@ ) {
+		$log->warn("couldn't fetch AA for sequence $seed_gi from file $file");
 	}
 }
 
@@ -138,7 +152,7 @@ for my $i ( 0 .. $#protids ) {
 
 Now each list of files (value of %matrices hash) must be profile-aligned if
 there is more than one (perhaps iteratively so) until there are only singletons
-left, which are concatenated and joined in taxon IDs
+left, which are concatenated and joined on taxon IDs
 
 =cut
 
