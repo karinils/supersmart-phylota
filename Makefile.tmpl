@@ -1,24 +1,15 @@
 setup :
 	echo "Configured for genbank release number [% conf.currentGBRelease %]"
 
-[% conf.GB_TAXONOMY_DIR %]/[% conf.GB_TAXONOMY_ARC %] : 
-	wget [% conf.GB_TAXONOMY_URL %] -O $@
+[% conf.DUMP_IN_FILE %] :
+	curl [% conf.DUMP_IN_URL %][% conf.DUMP_IN_CHUNKS %] > $@
 
-[% conf.GB_TAXONOMY_DIR %]/names.dmp : [% conf.GB_TAXONOMY_DIR %]/[% conf.GB_TAXONOMY_ARC %]
-	cd [% conf.GB_TAXONOMY_DIR %] && tar -zxvf [% conf.GB_TAXONOMY_ARC %] $(@F) && cd -
-
-[% conf.GB_TAXONOMY_DIR %]/nodes.dmp : [% conf.GB_TAXONOMY_DIR %]/[% conf.GB_TAXONOMY_ARC %]
-	cd [% conf.GB_TAXONOMY_DIR %] && tar -zxvf [% conf.GB_TAXONOMY_ARC %] $(@F) && cd -
-	
-taxonomy : [% conf.GB_TAXONOMY_DIR %]/names.dmp [% conf.GB_TAXONOMY_DIR %]/nodes.dmp
-
-schema : [% conf.SCHEMA_FILE %]
-	mysql -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %] < $<
-
-db_setup :
+db_setup : [% conf.DUMP_IN_FILE %]
 	mysql -e "create user '[% conf.USER %]'@'localhost' identified by '[% conf.PASS %]';"
 	mysql -e "create database [% conf.DATABASE %];"
 	mysql -e "grant all privileges on [% conf.DATABASE %].* to '[% conf.USER %]'@'localhost';"
+	mysql -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %] < [% conf.INPARANOID_SQL_FILE %]
+	gunzip -c $< | mysql -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %]
 
 dao :
 	perl -MDBIx::Class::Schema::Loader=make_schema_at,dump_to_dir:./lib \
@@ -26,23 +17,17 @@ dao :
 		{ db_schema => "phylota", overwrite_modifications => 1 }, \
 		[ "dbi:[% conf.RDBMS %]:dbname=[% conf.DATABASE %]", "[% conf.USER %]", "[% conf.PASS %]" ])'
 
-[% conf.DUMP_IN_FILE %] :
-	curl [% conf.DUMP_IN_URL %][% conf.DUMP_IN_CHUNKS %] > $@
+[% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SPECIESTABLE %] : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SPECIESLIST %]
+	perl -Ilib script/supersmart/write_taxa_table.pl -i $< [% conf.SUPERSMART_VERBOSITY %] > $@
 
-dl_dump : [% conf.DUMP_IN_FILE %]
+tnrs : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SPECIESTABLE %]
 
-load_dump : [% conf.DUMP_IN_FILE %]
-	gunzip -c $< | mysql -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %]
-
-[% conf.DUMP_OUT_FILE %].gz :
-	mysqldump -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %] | gzip -9 > $@
-
-[% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_COMMONTREE %] : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SPECIESLIST %]
+[% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_COMMONTREE %] : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SPECIESTABLE %]
 	perl -Ilib script/supersmart/write_common_tree.pl --nodelabels -i $< [% conf.SUPERSMART_VERBOSITY %] > $@
 
 commontree : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_COMMONTREE %]
 
-[% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_ALIGNMENTLIST %] : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SPECIESLIST %]
+[% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_ALIGNMENTLIST %] : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SPECIESTABLE %]
 	perl -Ilib script/supersmart/write_alignments.pl -i $< [% conf.SUPERSMART_VERBOSITY %] -s [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_ALIGNMENTSTEM %] > $@
 
 alignments : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_ALIGNMENTLIST %]
@@ -71,23 +56,24 @@ megatree : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_RAXML_RESULT %]
 chronogram : 
 	echo "not implemented yet"
 
+# create the manuscript with LaTeX
 [% conf.DOC_DIR %][% conf.DOC_OUT_FILE %] : [% conf.DOC_DIR %][% conf.DOC_IN_FILE %]
 	cd [% conf.DOC_DIR %] && latex [% conf.DOC_IN_FILE %]
 
 manuscript : [% conf.DOC_DIR %][% conf.DOC_OUT_FILE %]
 
+# download the concatenated FASTA file for InParanoid
 [% conf.INPARANOID_SEQ_FILE %] :
 	curl [% conf.INPARANOID_SEQ_URL %] -o $@
 
 dl_inparanoid_blast : [% conf.INPARANOID_SEQ_FILE %]
 
+# index the InParanoid BLAST database
 [% conf.INPARANOID_LOG_FILE %] : [% conf.INPARANOID_SEQ_FILE %]
 	formatdb -i $< -l [% conf.INPARANOID_LOG_FILE %] -p T -o T
 
 inparanoid_blast : [% conf.INPARANOID_LOG_FILE %]
 
-inparanoid_schema : [% conf.INPARANOID_SQL_FILE %]
-	cat $< | mysql -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %]
-
+# download the InParanoid pairwise comparison tables
 dl_inparanoid_sql :
 	cd [% conf.INPARANOID_SQL_DIR %] && wget --recursive --no-directories --no-parent --accept sqltable.* --level=1 [% conf.INPARANOID_SQL_URL %] && cd -
