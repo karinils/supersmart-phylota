@@ -72,7 +72,7 @@ sub find_node {
 		throw 'BadArgs' => $@;
 	}
 	if ( not $result ) {
-		$logger->warn("no result!");
+		$logger->info("no result!");
 	}
 	return $result;	
 }
@@ -87,7 +87,7 @@ sub search_node {
 		throw 'BadArgs' => $@;
 	}
 	if ( not $result ) {
-		$logger->warn("no result!");
+		$logger->info("no result!");
 	}
 	return $result;	
 }
@@ -102,7 +102,7 @@ sub single_node {
 		throw 'BadArgs' => $@;
 	}
 	if ( not $result ) {
-		$logger->warn("no result!");
+		$logger->info("no result!");
 	}
 	return $result;	
 }
