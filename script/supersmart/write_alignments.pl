@@ -28,24 +28,34 @@ my $log = Bio::Phylo::Util::Logger->new(
 );
 my $mts = Bio::Phylo::PhyLoTA::Service::MarkersAndTaxaSelector->new;
 
-# read names from file or STDIN, clean line breaks
-my @names;
-if ( $infile eq '-' ) {
-	@names = <STDIN>;
-	chomp(@names);
-	$log->info("read species names from STDIN");
+# instantiate nodes from infile
+my @nodes;
+{
+	# create file handle
+	my $fh;
+	if ( $infile eq '-' ) {
+		$fh = \*STDIN;
+		$log->debug("going to read names from STDIN");
+	}
+	else {
+		open $fh, '<', $infile or die $!;
+		$log->debug("going to read names from file $infile");
+	}
+	
+	# iterate over the table
+	while(<$fh>) {
+		chomp;
+		my @fields = split /\t/, $_;
+		my $ti = $fields[1];
+		my $node = $mts->find_node($ti);
+		if ( $node ) {
+			push @nodes, $node;
+		}
+		else {
+			$log->warn("Couldn't instantiate node ID $ti from local database");
+		}
+	}
 }
-else {
-	open my $fh, '<', $infile or die $!;
-	@names = <$fh>;
-	chomp(@names);
-	$log->info("read ".scalar(@names)." species names from $infile");
-}
-
-# this will take some time to do the taxonomic name resolution in the
-# database and with webservices
-my @nodes = $mts->get_nodes_for_names(@names);
-$log->info("found ".scalar(@nodes)." matches in NCBI taxonomy");
 
 # this is sorted from more to less inclusive
 my @clusters = $mts->get_clusters_for_nodes(@nodes);

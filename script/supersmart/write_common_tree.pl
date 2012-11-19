@@ -29,8 +29,8 @@ my $log = Bio::Phylo::Util::Logger->new(
 	'-level' => $verbosity
 );
 
-# read names from infile
-my @names;
+# instantiate nodes from infile
+my @nodes;
 {
 	# create file handle
 	my $fh;
@@ -43,17 +43,20 @@ my @names;
 		$log->debug("going to read names from file $infile");
 	}
 	
-	# slurp the names
-	@names = <$fh>;
-	
-	# remove line breaks
-	chomp @names;
-	$log->debug("read ".scalar(@names). " names");
+	# iterate over the table
+	while(<$fh>) {
+		chomp;
+		my @fields = split /\t/, $_;
+		my $ti = $fields[1];
+		my $node = $mts->find_node($ti);
+		if ( $node ) {
+			push @nodes, $node;
+		}
+		else {
+			$log->warn("Couldn't instantiate node ID $ti from local database");
+		}
+	}
 }
-
-# do TNRS on the names
-my @nodes = $mts->get_nodes_for_names(@names);
-$log->debug("done reconciling taxonomic names");
 
 # compute common tree
 my $tree = $mts->get_tree_for_nodes(@nodes);
