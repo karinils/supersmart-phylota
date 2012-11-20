@@ -2,7 +2,6 @@
 use strict;
 use warnings;
 use Getopt::Long;
-use Bio::Phylo::PhyLoTA::Config;
 use Bio::Phylo::Util::Logger ':levels';
 use Bio::Phylo::Matrices::Matrix;
 use Bio::Phylo::PhyLoTA::Service::SequenceGetter;
@@ -29,33 +28,7 @@ my $log = Bio::Phylo::Util::Logger->new(
 my $mts = Bio::Phylo::PhyLoTA::Service::MarkersAndTaxaSelector->new;
 
 # instantiate nodes from infile
-my @nodes;
-{
-	# create file handle
-	my $fh;
-	if ( $infile eq '-' ) {
-		$fh = \*STDIN;
-		$log->debug("going to read names from STDIN");
-	}
-	else {
-		open $fh, '<', $infile or die $!;
-		$log->debug("going to read names from file $infile");
-	}
-	
-	# iterate over the table
-	while(<$fh>) {
-		chomp;
-		my @fields = split /\t/, $_;
-		my $ti = $fields[1];
-		my $node = $mts->find_node($ti);
-		if ( $node ) {
-			push @nodes, $node;
-		}
-		else {
-			$log->warn("Couldn't instantiate node ID $ti from local database");
-		}
-	}
-}
+my @nodes = $mts->get_nodes_for_table( '-file' => $infile );
 
 # this is sorted from more to less inclusive
 my @clusters = $mts->get_clusters_for_nodes(@nodes);

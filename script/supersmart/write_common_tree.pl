@@ -30,33 +30,7 @@ my $log = Bio::Phylo::Util::Logger->new(
 );
 
 # instantiate nodes from infile
-my @nodes;
-{
-	# create file handle
-	my $fh;
-	if ( $infile eq '-' ) {
-		$fh = \*STDIN;
-		$log->debug("going to read names from STDIN");
-	}
-	else {
-		open $fh, '<', $infile or die $!;
-		$log->debug("going to read names from file $infile");
-	}
-	
-	# iterate over the table
-	while(<$fh>) {
-		chomp;
-		my @fields = split /\t/, $_;
-		my $ti = $fields[1];
-		my $node = $mts->find_node($ti);
-		if ( $node ) {
-			push @nodes, $node;
-		}
-		else {
-			$log->warn("Couldn't instantiate node ID $ti from local database");
-		}
-	}
-}
+my @nodes = $mts->get_nodes_for_table( '-file' => $infile );
 
 # compute common tree
 my $tree = $mts->get_tree_for_nodes(@nodes);
