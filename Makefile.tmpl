@@ -8,7 +8,8 @@ db_setup : [% conf.DUMP_IN_FILE %]
 	mysql -e "create user '[% conf.USER %]'@'localhost' identified by '[% conf.PASS %]';"
 	mysql -e "create database [% conf.DATABASE %];"
 	mysql -e "grant all privileges on [% conf.DATABASE %].* to '[% conf.USER %]'@'localhost';"
-	mysql -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %] < [% conf.INPARANOID_SQL_FILE %]
+	mysql -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %] -e "alter table ci_gi_[% conf.currentGBRelease %] add index(ti_of_gi);"
+	mysql -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %] < [% conf.INPARANOID_SQL_FILE %]	
 	gunzip -c $< | mysql -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %]
 
 dao :
