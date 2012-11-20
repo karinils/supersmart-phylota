@@ -10,6 +10,7 @@ use Data::Dumper;
 use LWP::UserAgent;
 use Bio::Phylo::Factory;
 use Bio::Phylo::Util::Logger;
+use Bio::Phylo::Util::Exceptions 'throw';
 use Bio::Phylo::PhyLoTA::DAO;
 
 extends 'Bio::Phylo::PhyLoTA::Service';
@@ -72,7 +73,7 @@ sub get_nodes_for_names {
             # search the web service
             if ( my $id = $self->_do_tnrs_search($name) ) {
                $node = $self->find_node($id);
-               $log->info("found match '$node' for $name through TNRS");
+               $log->info("found match $id for $name through TNRS");
             }
             else {
                 $log->warn("couldn't find name $name anywhere!");
@@ -87,6 +88,63 @@ sub get_nodes_for_names {
     }
     
     # return results
+    return @nodes;
+}
+
+=item get_nodes_for_table
+
+Accepts a tab-delimited file as produced by write_taxa_table.pl and returns instantiated
+node objects
+
+=cut
+
+sub get_nodes_for_table {
+    my ( $self, %args ) = @_;
+    my $i = $args{'-index'} || 1;
+        
+    # this will hold the instantiated node objects
+    my @nodes;
+    
+    # this will be the handle we read from, which we either...
+    my $fh;
+    
+    # ...open from a file
+    if ( $args{'-file'} ) {
+	open $fh, '<', $args{'-file'} or throw 'FileError' => $!;
+	$log->info("going to read column $i from file $args{'-file'}");
+    }
+    
+    # ...get passed in as an open handle
+    elsif ( $args{'-handle'} ) {
+	$fh = $args{'-handle'};
+	$log->info("going to read column $i from handle");
+    }
+    
+    # ...or disaster happens
+    else {
+	throw 'BadArgs' => 'need either -file or -handle argument';
+    }
+    
+    # iterate over lines
+    while(<$fh>) {
+	chomp;
+	my @fields = split /\t/, $_;
+	my $id = $fields[$i];
+	
+	# this will make us skip over any column headers and blank lines
+	if ( $id =~ /^\d+$/ ) {
+	    my $node = $self->find_node($id);
+	    
+	    # this *could* fail because perhaps the IDs have been found by TNRS
+	    # without being present in our local database
+	    if ( $node ) {
+		push @nodes, $node;
+	    }
+	    else {
+		$log->warn("couldn't instantiate node $id");
+	    }
+	}
+    }
     return @nodes;
 }
 
