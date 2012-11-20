@@ -77,6 +77,21 @@ sub find_node {
 	return $result;	
 }
 
+sub search_cluster {
+	my ( $self, $clause ) = @_;
+	my $result;
+	eval {
+		$result = $schema->resultset('Cluster')->search($clause);
+	};
+	if ( $@ ) {
+		throw 'BadArgs' => $@;
+	}
+	if ( not $result ) {
+		$logger->info("no result!");
+	}
+	return $result;	
+}
+
 sub search_node {
 	my ( $self, $clause ) = @_;
 	my $result;
