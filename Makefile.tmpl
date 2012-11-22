@@ -1,58 +1,112 @@
+# these are variables that are defined in the config file, and perhaps should be
+# configurable at runtime, i.e. "perl Makefile.PL WORKDIR=<dir>"
+WORKDIR=[% conf.WORKDIR %]
+NAMELIST=[% conf.NAMELIST %]
+VERBOSE=[% conf.VERBOSITY %]
+MPIRUN=[% conf.MPIRUN_BIN %] -np [% conf.NODES %]
+EXAML=[% conf.EXAML_BIN %] [% conf.EXAML_ARGS %]
+PARSER=[% conf.PARSER_BIN %]
+
+# shorthand for running the perl scripts without having to specify the added
+# search path (the lib folder) and the location of the scripts
+PERLSCRIPT=perl -Ilib script/supersmart
+
+# names for intermediate files within the working directory
+SPECIESTABLE=$(WORKDIR)/species.tsv
+COMMONTREE=$(WORKDIR)/common.dnd
+USERTREE=$(WORKDIR)/user.dnd
+ALIGNMENTLIST=$(WORKDIR)/aligned.txt
+ALIGNMENTSTEM=$(WORKDIR)/aligned.fa.
+MERGEDLIST=$(WORKDIR)/merged.txt
+MERGEDSTEM=$(WORKDIR)/merged.fa.
+SUPERMATRIX=$(WORKDIR)/supermatrix.phy
+BINARYMATRIX=supermatrix-bin
+MEGATREE=megatree.dnd
+
+# these are targets that have names, so that we can do things such as 'make
+# tnrs'. They need to be listed here as 'phony' targets because the name of the
+# target doesn't imply the creation of a file by that name. In other words,
+# 'make tnrs' doesn't result in a file called tnrs, and we need to tell the make
+# program about this so that it doesn't think files need to be re-generated.
+.PHONY : setup db_setup dao tnrs commontree alignments supermatrix constraint \
+		megatree chronogram manuscript dl_inparanoid_blast inparanoid_blast \
+		dl_inparanoid_sql
+
+# eventually this target should result in all the pre-work being done, so that
+# users can do "perl Makefile.PL && make && make setup && make test"
 setup :
 	echo "Configured for genbank release number [% conf.currentGBRelease %]"
 
+# downloads and concatenates the phylota database dump chunks
 [% conf.DUMP_IN_FILE %] :
 	curl [% conf.DUMP_IN_URL %][% conf.DUMP_IN_CHUNKS %] > $@
 
+# initializes the database:
+# - creates the user
+# - creates the empty database
+# - grants newly created user all privileges on database
+# - creates inparanoid database table
+# - loads phylota database dump
+# - applies a patch to the phylota schema (index on cigi.ti_of_gi)
 db_setup : [% conf.DUMP_IN_FILE %]
 	mysql -e "create user '[% conf.USER %]'@'localhost' identified by '[% conf.PASS %]';"
 	mysql -e "create database [% conf.DATABASE %];"
 	mysql -e "grant all privileges on [% conf.DATABASE %].* to '[% conf.USER %]'@'localhost';"
-	mysql -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %] -e "alter table ci_gi_[% conf.currentGBRelease %] add index(ti_of_gi);"
-	mysql -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %] < [% conf.INPARANOID_SQL_FILE %]	
+	mysql -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %] < [% conf.INPARANOID_SQL_FILE %]		
 	gunzip -c $< | mysql -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %]
+	mysql -u [% conf.USER %] -p[% conf.PASS %] [% conf.DATABASE %] -e "alter table ci_gi_[% conf.currentGBRelease %] add index(ti_of_gi);"	
 
+# generates the DAO classes from the database schema
 dao :
 	perl -MDBIx::Class::Schema::Loader=make_schema_at,dump_to_dir:./lib \
 		-e 'make_schema_at("Bio::Phylo::PhyLoTA::DAO", \
 		{ db_schema => "phylota", overwrite_modifications => 1 }, \
 		[ "dbi:[% conf.RDBMS %]:dbname=[% conf.DATABASE %]", "[% conf.USER %]", "[% conf.PASS %]" ])'
 
-[% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SPECIESTABLE %] : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SPECIESLIST %]
-	perl -Ilib script/supersmart/write_taxa_table.pl -i $< [% conf.SUPERSMART_VERBOSITY %] > $@
+# these targets create a table where the first column has the input species
+# names and subsequent columns have the species ID and higher taxon IDs
+$(SPECIESTABLE) : $(NAMELIST)
+	$(PERLSCRIPT)/write_taxa_table.pl -i $< $(VERBOSE) > $@
 
-tnrs : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SPECIESTABLE %]
+tnrs : $(SPECIESTABLE)
 
-[% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_COMMONTREE %] : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SPECIESTABLE %]
-	perl -Ilib script/supersmart/write_common_tree.pl --nodelabels -i $< [% conf.SUPERSMART_VERBOSITY %] > $@
+# these targets create the NCBI common tree from an input species table
+$(COMMONTREE) : $(SPECIESTABLE)
+	$(PERLSCRIPT)/write_common_tree.pl --nodelabels -i $< $(VERBOSE) > $@
 
-commontree : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_COMMONTREE %]
+commontree : $(COMMONTREE)
 
-[% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_ALIGNMENTLIST %] : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SPECIESTABLE %]
-	perl -Ilib script/supersmart/write_alignments.pl -i $< [% conf.SUPERSMART_VERBOSITY %] -s [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_ALIGNMENTSTEM %] > $@
+# create alignments from an input species table
+$(ALIGNMENTLIST) : $(SPECIESTABLE)
+	$(PERLSCRIPT)/write_alignments.pl -i $< $(VERBOSE) -s $(ALIGNMENTSTEM) > $@
 
-alignments : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_ALIGNMENTLIST %]
+alignments : $(ALIGNMENTLIST)
 
-[% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_MERGEDLIST %] : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_ALIGNMENTLIST %]
-	perl script/supersmart/merge_alignments.pl -l $< [% conf.SUPERSMART_VERBOSITY %] -s [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_MERGEDSTEM %] > $@
+# merge alignments by orthology 
+$(MERGEDLIST) : $(ALIGNMENTLIST)
+	$(PERLSCRIPT)/merge_alignments.pl -l $< $(VERBOSE) -s $(MERGEDSTEM) > $@
 
-[% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SUPERMATRIX %] : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_MERGEDLIST %]
-	perl script/supersmart/join_alignments.pl -l $< [% conf.SUPERSMART_VERBOSITY %] --nexus > $@
+# join alignments by taxon
+$(SUPERMATRIX) : $(MERGEDLIST)
+	$(PERLSCRIPT)/join_alignments.pl -l $< $(VERBOSE) --nexus > $@
 
-supermatrix : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SUPERMATRIX %]
+supermatrix : $(SUPERMATRIX)
 
-[% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_BIN_SUPERMATRIX %].binary : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SUPERMATRIX %]
-	cd [% conf.SUPERSMART_WORKDIR %] && [% conf.SUPERSMART_RAXML_PARSER %] -s [% conf.SUPERSMART_SUPERMATRIX %] -n [% conf.SUPERSMART_BIN_SUPERMATRIX %] -m DNA
+# compresses the supermatrix into binary format
+$(WORKDIR)/$(BINARYMATRIX).binary : $(SUPERMATRIX)
+	cd $(WORKDIR)/ && $(PARSER) -s $(<F) -n $(BINARYMATRIX) -m DNA
 
-[% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_RAXMLCON %] : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_COMMONTREE %] [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SUPERMATRIX %]
-	perl script/supersmart/write_constraint_tree.pl -t [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_COMMONTREE %] -s [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_SUPERMATRIX %] [% conf.SUPERSMART_VERBOSITY %] > $@
+# create input tree for examl
+$(USERTREE) : $(COMMONTREE) $(SUPERMATRIX)
+	$(PERLSCRIPT)/write_constraint_tree.pl -t $(COMMONTREE) -s $(SUPERMATRIX) $(VERBOSE) > $@
 
-constraint : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_RAXMLCON %]
+constraint : $(USERTREE)
 
-[% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_RAXML_RESULT %] : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_RAXMLCON %] [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_BIN_SUPERMATRIX %].binary
-	cd [% conf.SUPERSMART_WORKDIR %] && [% conf.SUPERSMART_RAXML %] [% conf.SUPERSMART_RAXML_ARGS %] -s [% conf.SUPERSMART_BIN_SUPERMATRIX %].binary -t [% conf.SUPERSMART_RAXMLCON %] -n [% conf.SUPERSMART_RAXML_RESULT %]
+# run examl
+$(WORKDIR)/$(MEGATREE) : $(USERTREE) $(WORKDIR)/$(BINARYMATRIX).binary
+	cd $(WORKDIR)/ && $(EXAML) -s $(BINARYMATRIX).binary -t $(USERTREE) -n $(@F)
 
-megatree : [% conf.SUPERSMART_WORKDIR %][% conf.SUPERSMART_RAXML_RESULT %]
+megatree : $(WORKDIR)/$(MEGATREE)
 
 chronogram : 
 	echo "not implemented yet"
