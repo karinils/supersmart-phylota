@@ -22,7 +22,7 @@ sub new {
         $args{'-pass'}     ||= $config->PASS;
         my $dsn_tmpl  = 'DBI:%s:database=%s;host=%s';
         $args{'-dsn'} = sprintf($dsn_tmpl, @args{qw[-rdbms -database -host]});
-        $args{'-dbh'} = DBI->connect($args{'-dsn'},@args{qw[-user -pass]});
+        $args{'-dbh'} = DBI->connect($args{'-dsn'},@args{qw[-user -pass]},{ RaiseError => 1 });
         $SINGLETON = \%args;
         bless $SINGLETON, $class;
     }
