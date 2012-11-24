@@ -12,6 +12,7 @@ use Bio::Tools::Run::Alignment::Muscle;
 use Bio::Tools::Run::StandAloneBlast;
 use Bio::Phylo::Factory;
 use Bio::Phylo::Util::Exceptions 'throw';
+use Bio::Phylo::IO 'parse_matrix';
 
 extends 'Bio::Phylo::PhyLoTA::Service';
 
@@ -233,7 +234,7 @@ sub run_blast_search {
 		'-d' => $args{'-database'} || $self->config->INPARANOID_SEQ_FILE,
 		'2>' => '/dev/null',
 	);
-	$log->info("will run blast as '@cmd'");
+	$log->debug("will run blast as '@cmd'");
 	
 	# now run blast
 	my $result = `@cmd`;
@@ -247,7 +248,7 @@ sub run_blast_search {
 	my @hits;
 	my $report = Bio::SearchIO->new( '-format' => 'blast', '-fh' => $out );
 	while ( my $result = $report->next_result() ) {
-		$log->info("iterating over result $result");
+		$log->debug("iterating over result $result");
 		
 		# there should be just one result with several hits
 		while ( my $hit = $result->next_hit() ) {
@@ -256,13 +257,87 @@ sub run_blast_search {
 				# there are odd suffixes in the file we downloaded from
 				# inparanoid
 				$name =~ s/_+spec_id_\d+$//;
-				$log->info("iterating over hit $hit");
-				$log->info("hit name is: $name");
+				$log->debug("iterating over hit $hit");
+				$log->debug("hit name is: $name");
 				push @hits, $self->search_inparanoid({ 'protid' => $name });
 			}
 		}
 	}
 	return @hits;	
+}
+
+=item get_orthologs_for_protein_id
+
+Fetches all orthologous InParanoid protein IDs for a given ID
+
+=cut
+
+sub get_orthologs_for_protein_id {
+    my ($self,$protid) = @_;
+    my $log = $self->logger;
+    my @orthologs;
+    
+    # this fetches all instances where $protid is a member in a pairwise comparison
+    my @records = $self->search_inparanoid({ 'protid' => $protid })->all;
+    $log->info("found ".scalar(@records)." records for $protid");
+    my $i = 1;
+    for my $record ( @records ) {
+	$log->info("processing hit $i for protid $protid");
+	
+	# together, these two uniquely identify the pairwise comparison
+	my $id = $record->id;
+	my $guid = $record->guid;
+	$log->info("related records will have ID $id and GUID $guid");
+	
+	# this gets all participants in the pairwise comparison (i.e. also our query $protid)
+	my @results = $self->search_inparanoid({ 'id' => $id, 'guid' => $guid, 'bootstrap' => '100%' })->all;
+	$log->info("found ".scalar(@results)." related records with ID $id and GUID $guid");
+	
+	# here we filter out the results where the member *is* $protid, keeping the other member
+	push @orthologs, grep { $_ ne $protid } map { $_->protid } @results;
+	$i++;
+    }
+    return @orthologs;
+}
+
+=item get_protid_for_seed_gi
+
+Takes a seed GI, attempts to locate a protein translation for it,
+BLASTs the protein against InParanoid and returns the protein ID
+of the best hit
+
+=cut
+
+sub get_protid_for_seed_gi {
+    my ( $self, $seed_gi ) = @_;
+    my $log = $self->logger;
+    $log->debug("going to analyse seed GI $seed_gi");
+    my $protid;
+	
+    # do protein translation
+    eval {
+        if ( my $aa = $self->get_aa_for_sequence($seed_gi) ) {
+            $log->debug("seed GI $seed_gi has protein translation: $aa");
+            
+            # run blast
+            if ( my @hits = $self->run_blast_search( '-seq' => $aa ) ) {
+                    
+                # get best inparanoid hit
+                if ( $hits[0] and $hits[0]->count > 0 ) {
+                    $log->debug("seed GI $seed_gi has BLAST hits");
+                    
+                    # fetch and store protein id
+                    $protid = $hits[0]->next->protid;                    
+                    $log->debug("seed GI $seed_gi has best hit $protid");
+
+                }
+            }
+        }
+    };
+    if ( $@ ) {
+        $log->warn("couldn't fetch AA for sequence $seed_gi: $@");
+    }
+    return $protid;
 }
 
 =item get_largest_cluster_for_sequence
@@ -640,6 +715,29 @@ sub align_sequences{
     my $muscle = Bio::Tools::Run::Alignment::Muscle->new;
     my $align=$muscle->align(\@convertedseqs);
     return $align;
+}
+
+=item profile_align_files
+
+Aligns two sets of already aligned sequences (two file names) against each other, returns
+a string representation of the alignment
+
+=cut
+
+sub profile_align_files {
+    my ($self,$file1,$file2) = @_;   
+    my $result = `muscle -profile -in1 $file1 -in2 $file2 -quiet`;
+    return $result;
+}
+
+sub _temp_fasta {
+    my $array = shift;
+    my ( $fh, $filename ) = tempfile();
+    for my $seq ( @{ $array } ) {
+	print $fh '>', $seq->get_name, "\n", $seq->get_char, "\n";
+    }
+    close $fh;
+    return $filename;
 }
 
 1;
