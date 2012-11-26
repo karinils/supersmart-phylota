@@ -1,218 +1,218 @@
-Allenopithecus_nigroviridis
-Allocebus_trichotis
-Alouatta_belzebul
-Alouatta_caraya
-Alouatta_fusca
-Alouatta_palliata
-Alouatta_pigra
-Alouatta_seniculus
-Aotus_azarai
-Aotus_brumbacki
-Aotus_infulatus
-Aotus_lemurinus
-Aotus_miconax
-Aotus_nancymaae
-Aotus_nigriceps
-Aotus_trivirgatus
-Aotus_vociferans
-Arctocebus_calabarensis
-Ateles_belzebuth
-Ateles_chamek
-Ateles_fusciceps
-Ateles_geoffroyi
-Ateles_marginatus
-Ateles_paniscus
-Avahi_laniger
-Brachyteles_arachnoides
-Cacajao_calvus
-Cacajao_melanocephalus
-Callicebus_brunneus
-Callicebus_caligatus
-Callicebus_cinerascens
-Callicebus_cupreus
-Callicebus_donacophilus
-Callicebus_dubius
-Callicebus_hoffmannsi
-Callicebus_modestus
-Callicebus_moloch
-Callicebus_oenanthe
-Callicebus_olallae
-Callicebus_personatus
-Callicebus_torquatus
-Callimico_goeldii
-Callithrix_argentata
-Callithrix_aurita
-Callithrix_flaviceps
-Callithrix_geoffroyi
-Callithrix_humeralifera
-Callithrix_jacchus
-Callithrix_kuhlii
-Callithrix_penicillata
-Callithrix_pygmaea
-Cebus_albifrons
-Cebus_apella
-Cebus_capucinus
-Cebus_olivaceus
-Cercocebus_galeritus
-Cercocebus_torquatus
-Cercopithecus_ascanius
-Cercopithecus_campbelli
-Cercopithecus_cephus
-Cercopithecus_diana
-Cercopithecus_dryas
-Cercopithecus_erythrogaster
-Cercopithecus_erythrotis
-Cercopithecus_hamlyni
-Cercopithecus_lhoesti
-Cercopithecus_mitis
-Cercopithecus_mona
-Cercopithecus_neglectus
-Cercopithecus_nictitans
-Cercopithecus_petaurista
-Cercopithecus_pogonias
-Cercopithecus_preussi
-Cercopithecus_solatus
-Cercopithecus_wolfi
-Cheirogaleus_major
-Cheirogaleus_medius
-Chiropotes_albinasus
-Chiropotes_satanas
-Chlorocebus_aethiops
-Colobus_angolensis
-Colobus_guereza
-Colobus_polykomos
-Colobus_satanas
-Daubentonia_madagascariensis
-Erythrocebus_patas
-Eulemur_coronatus
-Eulemur_fulvus
-Eulemur_macaco
-Eulemur_mongoz
-Eulemur_rubriventer
-Euoticus_elegantulus
-Galago_alleni
-Galago_gallarum
-Galago_matschiei
-Galago_moholi
-Galago_senegalensis
-Galagoides_demidoff
-Galagoides_zanzibaricus
-Gorilla_gorilla
-Hapalemur_aureus
-Hapalemur_griseus
-Hapalemur_simus
-Homo_sapiens
-Hylobates_agilis
-Hylobates_concolor
-Hylobates_gabriellae
-Hylobates_hoolock
-Hylobates_klossii
-Hylobates_lar
-Hylobates_leucogenys
-Hylobates_moloch
-Hylobates_muelleri
-Hylobates_pileatus
-Hylobates_syndactylus
-Indri_indri
-Lagothrix_flavicauda
-Lagothrix_lagotricha
-Lemur_catta
-Leontopithecus_chrysomela
-Leontopithecus_chrysopygus
-Leontopithecus_rosalia
-Lepilemur_dorsalis
-Lepilemur_edwardsi
-Lepilemur_leucopus
-Lepilemur_mustelinus
-Lepilemur_ruficaudatus
-Lepilemur_septentrionalis
-Lophocebus_albigena
-Loris_tardigradus
-Macaca_arctoides
-Macaca_assamensis
-Macaca_cyclopis
-Macaca_fascicularis
-Macaca_fuscata
-Macaca_maura
-Macaca_mulatta
-Macaca_nemestrina
-Macaca_nigra
-Macaca_ochreata
-Macaca_radiata
-Macaca_silenus
-Macaca_sinica
-Macaca_sylvanus
-Macaca_thibetana
-Macaca_tonkeana
-Mandrillus_leucophaeus
-Mandrillus_sphinx
-Microcebus_coquereli
-Microcebus_murinus
-Microcebus_rufus
-Miopithecus_talapoin
-Nasalis_concolor
-Nasalis_larvatus
-Nycticebus_coucang
-Nycticebus_pygmaeus
-Otolemur_crassicaudatus
-Otolemur_garnettii
-Pan_paniscus
-Pan_troglodytes
-Papio_hamadryas
-Perodicticus_potto
-Phaner_furcifer
-Pithecia_aequatorialis
-Pithecia_albicans
-Pithecia_irrorata
-Pithecia_monachus
-Pithecia_pithecia
-Pongo_pygmaeus
-Presbytis_comata
-Presbytis_frontata
-Presbytis_melalophos
-Presbytis_potenziani
-Presbytis_rubicunda
-Procolobus_badius
-Procolobus_pennantii
-Procolobus_verus
-Propithecus_diadema
-Propithecus_tattersalli
-Propithecus_verreauxi
-Pygathrix_avunculus
-Pygathrix_bieti
-Pygathrix_brelichi
-Pygathrix_nemaeus
-Pygathrix_roxellana
-Saguinus_bicolor
-Saguinus_fuscicollis
-Saguinus_geoffroyi
-Saguinus_imperator
-Saguinus_inustus
-Saguinus_labiatus
-Saguinus_leucopus
-Saguinus_midas
-Saguinus_mystax
-Saguinus_nigricollis
-Saguinus_oedipus
-Saguinus_tripartitus
-Saimiri_boliviensis
-Saimiri_oerstedii
-Saimiri_sciureus
-Saimiri_ustus
-Saimiri_vanzolinii
-Semnopithecus_entellus
-Tarsius_bancanus
-Tarsius_pumilus
-Tarsius_spectrum
-Tarsius_syrichta
-Theropithecus_gelada
-Trachypithecus_auratus
-Trachypithecus_cristatus
-Trachypithecus_francoisi
-Trachypithecus_geei
-Trachypithecus_johnii
-Trachypithecus_obscurus
-Trachypithecus_phayrei
-Trachypithecus_pileatus
-Trachypithecus_vetulus
-Varecia_variegata
+Allenopithecus nigroviridis
+Allocebus trichotis
+Alouatta belzebul
+Alouatta caraya
+Alouatta fusca
+Alouatta palliata
+Alouatta pigra
+Alouatta seniculus
+Aotus azarai
+Aotus brumbacki
+Aotus infulatus
+Aotus lemurinus
+Aotus miconax
+Aotus nancymaae
+Aotus nigriceps
+Aotus trivirgatus
+Aotus vociferans
+Arctocebus calabarensis
+Ateles belzebuth
+Ateles chamek
+Ateles fusciceps
+Ateles geoffroyi
+Ateles marginatus
+Ateles paniscus
+Avahi laniger
+Brachyteles arachnoides
+Cacajao calvus
+Cacajao melanocephalus
+Callicebus brunneus
+Callicebus caligatus
+Callicebus cinerascens
+Callicebus cupreus
+Callicebus donacophilus
+Callicebus dubius
+Callicebus hoffmannsi
+Callicebus modestus
+Callicebus moloch
+Callicebus oenanthe
+Callicebus olallae
+Callicebus personatus
+Callicebus torquatus
+Callimico goeldii
+Callithrix argentata
+Callithrix aurita
+Callithrix flaviceps
+Callithrix geoffroyi
+Callithrix humeralifera
+Callithrix jacchus
+Callithrix kuhlii
+Callithrix penicillata
+Callithrix pygmaea
+Cebus albifrons
+Cebus apella
+Cebus capucinus
+Cebus olivaceus
+Cercocebus galeritus
+Cercocebus torquatus
+Cercopithecus ascanius
+Cercopithecus campbelli
+Cercopithecus cephus
+Cercopithecus diana
+Cercopithecus dryas
+Cercopithecus erythrogaster
+Cercopithecus erythrotis
+Cercopithecus hamlyni
+Cercopithecus lhoesti
+Cercopithecus mitis
+Cercopithecus mona
+Cercopithecus neglectus
+Cercopithecus nictitans
+Cercopithecus petaurista
+Cercopithecus pogonias
+Cercopithecus preussi
+Cercopithecus solatus
+Cercopithecus wolfi
+Cheirogaleus major
+Cheirogaleus medius
+Chiropotes albinasus
+Chiropotes satanas
+Chlorocebus aethiops
+Colobus angolensis
+Colobus guereza
+Colobus polykomos
+Colobus satanas
+Daubentonia madagascariensis
+Erythrocebus patas
+Eulemur coronatus
+Eulemur fulvus
+Eulemur macaco
+Eulemur mongoz
+Eulemur rubriventer
+Euoticus elegantulus
+Galago alleni
+Galago gallarum
+Galago matschiei
+Galago moholi
+Galago senegalensis
+Galagoides demidoff
+Galagoides zanzibaricus
+Gorilla gorilla
+Hapalemur aureus
+Hapalemur griseus
+Hapalemur simus
+Homo sapiens
+Hylobates agilis
+Hylobates concolor
+Hylobates gabriellae
+Hylobates hoolock
+Hylobates klossii
+Hylobates lar
+Hylobates leucogenys
+Hylobates moloch
+Hylobates muelleri
+Hylobates pileatus
+Hylobates syndactylus
+Indri indri
+Lagothrix flavicauda
+Lagothrix lagotricha
+Lemur catta
+Leontopithecus chrysomela
+Leontopithecus chrysopygus
+Leontopithecus rosalia
+Lepilemur dorsalis
+Lepilemur edwardsi
+Lepilemur leucopus
+Lepilemur mustelinus
+Lepilemur ruficaudatus
+Lepilemur septentrionalis
+Lophocebus albigena
+Loris tardigradus
+Macaca arctoides
+Macaca assamensis
+Macaca cyclopis
+Macaca fascicularis
+Macaca fuscata
+Macaca maura
+Macaca mulatta
+Macaca nemestrina
+Macaca nigra
+Macaca ochreata
+Macaca radiata
+Macaca silenus
+Macaca sinica
+Macaca sylvanus
+Macaca thibetana
+Macaca tonkeana
+Mandrillus leucophaeus
+Mandrillus sphinx
+Microcebus coquereli
+Microcebus murinus
+Microcebus rufus
+Miopithecus talapoin
+Nasalis concolor
+Nasalis larvatus
+Nycticebus coucang
+Nycticebus pygmaeus
+Otolemur crassicaudatus
+Otolemur garnettii
+Pan paniscus
+Pan troglodytes
+Papio hamadryas
+Perodicticus potto
+Phaner furcifer
+Pithecia aequatorialis
+Pithecia albicans
+Pithecia irrorata
+Pithecia monachus
+Pithecia pithecia
+Pongo pygmaeus
+Presbytis comata
+Presbytis frontata
+Presbytis melalophos
+Presbytis potenziani
+Presbytis rubicunda
+Procolobus badius
+Procolobus pennantii
+Procolobus verus
+Propithecus diadema
+Propithecus tattersalli
+Propithecus verreauxi
+Pygathrix avunculus
+Pygathrix bieti
+Pygathrix brelichi
+Pygathrix nemaeus
+Pygathrix roxellana
+Saguinus bicolor
+Saguinus fuscicollis
+Saguinus geoffroyi
+Saguinus imperator
+Saguinus inustus
+Saguinus labiatus
+Saguinus leucopus
+Saguinus midas
+Saguinus mystax
+Saguinus nigricollis
+Saguinus oedipus
+Saguinus tripartitus
+Saimiri boliviensis
+Saimiri oerstedii
+Saimiri sciureus
+Saimiri ustus
+Saimiri vanzolinii
+Semnopithecus entellus
+Tarsius bancanus
+Tarsius pumilus
+Tarsius spectrum
+Tarsius syrichta
+Theropithecus gelada
+Trachypithecus auratus
+Trachypithecus cristatus
+Trachypithecus francoisi
+Trachypithecus geei
+Trachypithecus johnii
+Trachypithecus obscurus
+Trachypithecus phayrei
+Trachypithecus pileatus
+Trachypithecus vetulus
+Varecia variegata

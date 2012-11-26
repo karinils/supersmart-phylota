@@ -42,5 +42,13 @@ my $tree = parse(
 	'-file'   => $treefile,
 )->first;
 
+# prefix t to tip labels
+$tree->visit(sub{
+	my $node = shift;
+	if ( my $name = $node->get_name ) {
+		$node->set_name( "t$name" );
+	}
+});
+
 # remove unbranched internal nodes, keep tips of interest, serialize
 print $tree->remove_unbranched_internals->keep_tips(\@keep)->resolve->to_newick;
