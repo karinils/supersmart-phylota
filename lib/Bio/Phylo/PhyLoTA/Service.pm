@@ -72,7 +72,22 @@ sub find_node {
 		throw 'BadArgs' => $@;
 	}
 	if ( not $result ) {
-		$logger->warn("no result!");
+		$logger->info("no result!");
+	}
+	return $result;	
+}
+
+sub search_cluster {
+	my ( $self, $clause ) = @_;
+	my $result;
+	eval {
+		$result = $schema->resultset('Cluster')->search($clause);
+	};
+	if ( $@ ) {
+		throw 'BadArgs' => $@;
+	}
+	if ( not $result ) {
+		$logger->info("no result!");
 	}
 	return $result;	
 }
@@ -87,7 +102,7 @@ sub search_node {
 		throw 'BadArgs' => $@;
 	}
 	if ( not $result ) {
-		$logger->warn("no result!");
+		$logger->info("no result!");
 	}
 	return $result;	
 }
@@ -102,7 +117,7 @@ sub single_node {
 		throw 'BadArgs' => $@;
 	}
 	if ( not $result ) {
-		$logger->warn("no result!");
+		$logger->info("no result!");
 	}
 	return $result;	
 }

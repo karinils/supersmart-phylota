@@ -8,3 +8,6 @@ data/INPARANOID
 _Inline/
 MYMETA.*
 results/primates/*
+results/alcids/*
+results/alcids_bak/*
+data/FOSSILS/*

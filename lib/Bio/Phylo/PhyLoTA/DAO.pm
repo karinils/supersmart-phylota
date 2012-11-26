@@ -58,7 +58,7 @@ cluster set are calculated and stored in 'summary_stats'.
 use Bio::Phylo::PhyLoTA::DBH;
 my $SINGLETON;
 sub new {
-	$SINGLETON ||= shift->connect( sub { Bio::Phylo::PhyLoTA::DBH->new } );
+	$SINGLETON ||= shift->connect( sub { Bio::Phylo::PhyLoTA::DBH->new }, { limit_dialect => 'LimitXY' } );
 	return $SINGLETON;
 }
 1;

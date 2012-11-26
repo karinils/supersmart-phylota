@@ -2,7 +2,6 @@
 use strict;
 use warnings;
 use Getopt::Long;
-use Bio::Phylo::PhyLoTA::Config;
 use Bio::Phylo::Util::Logger ':levels';
 use Bio::Phylo::Matrices::Matrix;
 use Bio::Phylo::PhyLoTA::Service::SequenceGetter;
@@ -28,24 +27,8 @@ my $log = Bio::Phylo::Util::Logger->new(
 );
 my $mts = Bio::Phylo::PhyLoTA::Service::MarkersAndTaxaSelector->new;
 
-# read names from file or STDIN, clean line breaks
-my @names;
-if ( $infile eq '-' ) {
-	@names = <STDIN>;
-	chomp(@names);
-	$log->info("read species names from STDIN");
-}
-else {
-	open my $fh, '<', $infile or die $!;
-	@names = <$fh>;
-	chomp(@names);
-	$log->info("read ".scalar(@names)." species names from $infile");
-}
-
-# this will take some time to do the taxonomic name resolution in the
-# database and with webservices
-my @nodes = $mts->get_nodes_for_names(@names);
-$log->info("found ".scalar(@nodes)." matches in NCBI taxonomy");
+# instantiate nodes from infile
+my @nodes = $mts->get_nodes_for_table( '-file' => $infile );
 
 # this is sorted from more to less inclusive
 my @clusters = $mts->get_clusters_for_nodes(@nodes);

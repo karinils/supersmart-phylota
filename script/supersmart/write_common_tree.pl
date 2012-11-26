@@ -29,31 +29,8 @@ my $log = Bio::Phylo::Util::Logger->new(
 	'-level' => $verbosity
 );
 
-# read names from infile
-my @names;
-{
-	# create file handle
-	my $fh;
-	if ( $infile eq '-' ) {
-		$fh = \*STDIN;
-		$log->debug("going to read names from STDIN");
-	}
-	else {
-		open $fh, '<', $infile or die $!;
-		$log->debug("going to read names from file $infile");
-	}
-	
-	# slurp the names
-	@names = <$fh>;
-	
-	# remove line breaks
-	chomp @names;
-	$log->debug("read ".scalar(@names). " names");
-}
-
-# do TNRS on the names
-my @nodes = $mts->get_nodes_for_names(@names);
-$log->debug("done reconciling taxonomic names");
+# instantiate nodes from infile
+my @nodes = $mts->get_nodes_for_table( '-file' => $infile );
 
 # compute common tree
 my $tree = $mts->get_tree_for_nodes(@nodes);

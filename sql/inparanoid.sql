@@ -4,6 +4,6 @@ create table if not exists inparanoid(
 	filename varchar(64) default null,
 	confidence float default null,
 	protid varchar(64) default null,
-	key(protid),
+	primary key(id, guid, protid),
 	bootstrap varchar(4)
 ) ENGINE=MyISAM;
