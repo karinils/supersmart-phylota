@@ -2,6 +2,7 @@
 use strict;
 use warnings;
 use Getopt::Long;
+use Data::Dumper;
 use Parallel::MPI::Simple;
 use Bio::Phylo::Util::Logger ':levels';
 use Bio::Phylo::Matrices::Matrix;
@@ -14,11 +15,11 @@ use constant NODE_MAP => 3;
 
 # process command line arguments
 my $verbosity = WARN;
-my ( $infile, $stem );
+my ( $infile, $workdir );
 GetOptions(
-	'infile=s' => \$infile,
-	'stem=s'   => \$stem,
-	'verbose+' => \$verbosity,
+	'infile=s'  => \$infile,
+	'workdir=s' => \$workdir,
+	'verbose+'  => \$verbosity,
 );
 
 # instantiate helper objects
@@ -37,6 +38,11 @@ my $rank = MPI_Comm_rank(MPI_COMM_WORLD);
 
 # the following block is executed by the head node
 if ( $rank == 0 ) {
+        
+    # MPI_Comm_size returns the total number of nodes. Because we have one
+    # head node this needs to be - 1
+    my $nworkers = MPI_Comm_size(MPI_COMM_WORLD) - 1;
+    $log->info("we have $nworkers nodes available");
     
     # instantiate helper object
     my $mts = Bio::Phylo::PhyLoTA::Service::MarkersAndTaxaSelector->new;
@@ -45,15 +51,24 @@ if ( $rank == 0 ) {
     my @nodes = $mts->get_nodes_for_table( '-file' => $infile );
 
     # this is sorted from more to less inclusive
-    my @clusters = $mts->get_clusters_for_nodes(@nodes);
-
-    # now build the alignments
-    my %ti = map { $_->ti => 1 } @nodes;    
+    my @sorted_clusters = $mts->get_clusters_for_nodes(@nodes);
     
-    # MPI_Comm_size returns the total number of nodes. Because we have one
-    # head node this needs to be - 1
-    my $nworkers = MPI_Comm_size(MPI_COMM_WORLD) - 1;
-    $log->info("we have $nworkers nodes available");
+    # hear we split the sorted clusters into subsets that divide
+    # the inclusiveness more evenly
+    my @subset;
+    for my $i ( 0 .. $#sorted_clusters ) {
+	my $j = $i % $nworkers;
+	$log->info($j);
+	$subset[$j] = [] if not $subset[$j];
+	push @{ $subset[$j] }, $sorted_clusters[$i];
+    }
+    
+    # now we flatten the subsets again
+    my @clusters;
+    push @clusters, @{ $subset[$_] } for 0 .. ( $nworkers - 1 );
+
+    # this is a simple mapping to see whether a taxon is of interest
+    my %ti = map { $_->ti => 1 } @nodes;        
     
     # for each worker we dispatch an approximately equal chunk of clusters.
     my $nclusters = int( scalar(@clusters) / $nworkers );
@@ -93,7 +108,7 @@ if ( $rank == 0 ) {
 	for my $alignment ( @{ $result } ) {
             
             # create out file name
-	    my $outfile = $stem . $i;
+	    my $outfile = $workdir . '/' . $alignment->{seed_gi} . '.fa';
             
             # print name to stdout so we can make a list of produced files
             print $outfile, "\n";
@@ -102,7 +117,7 @@ if ( $rank == 0 ) {
 	    open my $outfh, '>', $outfile or die $!;
 	    
             # iterate over rows in alignment
-            for my $row ( @{ $alignment } ) {
+            for my $row ( @{ $alignment->{matrix} } ) {
                 
                 # 0 is FASTA header, 1 is aligned sequence data
                 print $outfh $row->[0], "\n", $row->[1], "\n";
@@ -160,7 +175,7 @@ else {
                 my $seq = $row->get_char;
                 push @matrix, [ ">gi|${gi}|seed_gi|${seed_gi}|taxon|${ti}" => $seq ];
             });
-            push @result, \@matrix;                
+            push @result, { 'seed_gi' => $seed_gi, 'matrix' => \@matrix };
         }
     }
     
