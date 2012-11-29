@@ -11,9 +11,9 @@ use constant FASTA_FILES => 1;
 use constant MATRICES => 2;
 
 # process command line arguments
-my ( $verbosity, $divergence, $alnfile, $chunkfile, $workdir ) = ( WARN, 0.25 );
+my ( $verbosity, $divergence, $mergedlist, $chunkfile, $workdir ) = ( WARN, 0.25 );
 GetOptions(
-	'alnfile=s'    => \$alnfile,
+	'mergedlist=s' => \$mergedlist,
 	'workdir=s'    => \$workdir,
 	'verbose+'     => \$verbosity,
 	'chunkfile=s'  => \$chunkfile,
@@ -34,10 +34,10 @@ my $rank = MPI_Comm_rank(MPI_COMM_WORLD);
 if ( $rank == 0 ) {
 		
 	# dispatch jobs listed in this file
-	$log->info("read alignment list file $alnfile");
+	$log->info("read alignment list file $mergedlist");
 	
 	# read list of file names
-	open my $fh, '<', $alnfile or die $!;	
+	open my $fh, '<', $mergedlist or die $!;	
 	my @names = grep { /\S/ } <$fh>;
 	chomp(@names);
 	close $fh;
@@ -150,6 +150,7 @@ if ( $rank == 0 ) {
 		# now write the supermatrix in PHYLIP format
 		open my $fh, '>', "${workdir}/${higher_taxon}.phy" or die $!;
 		print $fh hash_to_phylip(%degapped);
+		print "${workdir}/${higher_taxon}.phy\n";
 		
 		# pick the two most sequence-rich exemplars
 		my ( $ex1, $ex2 ) = sort { $seqs_for_taxon{$b} <=> $seqs_for_taxon{$a} } grep { $seqs_for_taxon{$_} } @species;
