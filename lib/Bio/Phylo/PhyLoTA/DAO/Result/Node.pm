@@ -237,7 +237,7 @@ sub set_parent { return shift }
 sub get_children {
 	my $self = shift;
 	my $ti = $self->ti;
-	my @children = $mts->search_node( { ti_anc => $ti } );
+	my @children = $mts->search_node( { ti_anc => $ti } )->all;
 	return \@children;
 }
 
