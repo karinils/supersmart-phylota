@@ -29,6 +29,8 @@ ALIGNMENTSTEM=$(WORKDIR)/aligned.fa.
 MERGEDLIST=$(WORKDIR)/merged.txt
 MERGEDSTEM=$(WORKDIR)/merged.fa.
 SUPERMATRIX=$(WORKDIR)/supermatrix.phy
+CHUNKTABLE=$(WORKDIR)/chunks.tsv
+CHUNKLIST=$(WORKDIR)/chunks.txt
 BINARYMATRIX=supermatrix-bin
 MEGATREE=megatree.dnd
 
@@ -86,9 +88,15 @@ dao :
 # creates a table where the first column has the input species
 # names and subsequent columns have the species ID and higher taxon IDs
 $(SPECIESTABLE) : $(NAMELIST)
-	$(PERLSCRIPT)/write_taxa_table.pl -i $< $(VERBOSE) > $@
+	$(MPIRUN) $(PERLSCRIPT)/mpi_write_taxa_table.pl -i $< $(VERBOSE) > $@
 
 tnrs : $(SPECIESTABLE)
+
+# writes nested chunks of taxon IDs
+$(CHUNKTABLE) : $(SPECIESTABLE)
+	$(PERLSCRIPT)/partition_tree.pl -i $< $(VERBOSE) -c [% conf.CHUNKSIZE %] > $@
+
+chunks : $(CHUNKTABLE)
 
 # creates the NCBI common tree from an input species table
 $(COMMONTREE) : $(SPECIESTABLE)
@@ -98,19 +106,26 @@ commontree : $(COMMONTREE)
 
 # create alignments from an input species table
 $(ALIGNMENTLIST) : $(SPECIESTABLE)
-	$(PERLSCRIPT)/write_alignments.pl -i $< $(VERBOSE) -s $(ALIGNMENTSTEM) > $@
+	$(MPIRUN) $(PERLSCRIPT)/mpi_write_alignments.pl -i $< $(VERBOSE) -w $(WORKDIR) > $@
 
 alignments : $(ALIGNMENTLIST)
 
 # merge alignments by orthology 
 $(MERGEDLIST) : $(ALIGNMENTLIST)
-	$(PERLSCRIPT)/merge_alignments.pl -l $< $(VERBOSE) -s $(MERGEDSTEM) > $@
+	$(MPIRUN) $(PERLSCRIPT)/mpi_merge_alignments.pl -l $< $(VERBOSE) -s $(MERGEDSTEM) > $@
 
 # join alignments by taxon
 $(SUPERMATRIX) : $(MERGEDLIST)
 	$(PERLSCRIPT)/join_alignments.pl -l $< $(VERBOSE) --nexus > $@
 
 supermatrix : $(SUPERMATRIX)
+
+# join alignments on exemplars
+$(CHUNKLIST) : $(CHUNKTABLE) $(MERGEDLIST)
+	$(MPIRUN) $(PERLSCRIPT)/mpi_join_alignments.pl -m $(MERGEDLIST) \
+        -w $(WORKDIR) $(VERBOSE) -c $(CHUNKTABLE) > $@
+
+chunkjoin : $(CHUNKLIST)
 
 # compresses the supermatrix into binary format
 $(WORKDIR)/$(BINARYMATRIX).binary : $(SUPERMATRIX)
