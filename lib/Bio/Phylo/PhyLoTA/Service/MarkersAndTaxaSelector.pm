@@ -351,8 +351,15 @@ sub _do_tnrs_search {
             die "Don't know how to continue";
         }
         
-        my $result = _fetch_url($url);
-        $obj = decode_json($result);            
+	# try to fetch the retrieve URL. If this fails we can only return undef.
+        eval {
+	    my $result = _fetch_url($url);
+	    $obj = decode_json($result);
+	};
+	if ( $@ ) {
+	    $log->error("Couldn't get response for $name: $@");
+	    return;
+	}
     }    
 }
 
@@ -402,7 +409,7 @@ sub _fetch_url {
 	if ( $response->is_success or $response->code == 302 ) {
 		$log->info($response->status_line);
 		my $content = $response->decoded_content;
-        $log->info($content);
+		$log->info($content);
 		return $content;
 	}
 	else {
