@@ -27,8 +27,9 @@ Selects optimal set of taxa and markers based on #markers/sp, coverage on matrix
 =cut
 
 # URL for the taxonomic name resolution service
-my $TNRS_URL = 'http://api.phylotastic.org/tnrs/submit';
-my $TNRS_RETRIEVE = 'http://api.phylotastic.org/tnrs/retrieve/';
+my $TNRS_BASE     = 'http://taxosaurus.org/';
+my $TNRS_URL      = $TNRS_BASE . 'submit';
+my $TNRS_RETRIEVE = $TNRS_BASE . 'retrieve/';
 
 # defaults for web service
 my $timeout = 60;
