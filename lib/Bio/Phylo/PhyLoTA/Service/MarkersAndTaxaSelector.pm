@@ -111,40 +111,40 @@ sub get_nodes_for_table {
     
     # ...open from a file
     if ( $args{'-file'} ) {
-	open $fh, '<', $args{'-file'} or throw 'FileError' => $!;
-	$log->info("going to read column $i from file $args{'-file'}");
+        open $fh, '<', $args{'-file'} or throw 'FileError' => $!;
+        $log->info("going to read column $i from file $args{'-file'}");
     }
     
     # ...get passed in as an open handle
     elsif ( $args{'-handle'} ) {
-	$fh = $args{'-handle'};
-	$log->info("going to read column $i from handle");
+        $fh = $args{'-handle'};
+        $log->info("going to read column $i from handle");
     }
     
     # ...or disaster happens
     else {
-	throw 'BadArgs' => 'need either -file or -handle argument';
+        throw 'BadArgs' => 'need either -file or -handle argument';
     }
     
     # iterate over lines
     while(<$fh>) {
-	chomp;
-	my @fields = split /\t/, $_;
-	my $id = $fields[$i];
-	
-	# this will make us skip over any column headers and blank lines
-	if ( $id =~ /^\d+$/ ) {
-	    my $node = $self->find_node($id);
-	    
-	    # this *could* fail because perhaps the IDs have been found by TNRS
-	    # without being present in our local database
-	    if ( $node ) {
-		push @nodes, $node;
-	    }
-	    else {
-		$log->warn("couldn't instantiate node $id");
-	    }
-	}
+        chomp;
+        my @fields = split /\t/, $_;
+        my $id = $fields[$i];
+        
+        # this will make us skip over any column headers and blank lines
+        if ( $id =~ /^\d+$/ ) {
+            my $node = $self->find_node($id);
+            
+            # this *could* fail because perhaps the IDs have been found by TNRS
+            # without being present in our local database
+            if ( $node ) {
+                push @nodes, $node;
+            }
+            else {
+                $log->warn("couldn't instantiate node $id");
+            }
+        }
     }
     return @nodes;
 }
@@ -318,6 +318,7 @@ sub _do_tnrs_search {
     
     # do the request
     my $result = _fetch_url( $TNRS_URL . '?query=' . uri_escape( $name ) );
+    return if not $result;
     $log->debug("raw result: $result");
     my $obj = decode_json($result);
     $log->debug("parsed response: ".Dumper($obj));
