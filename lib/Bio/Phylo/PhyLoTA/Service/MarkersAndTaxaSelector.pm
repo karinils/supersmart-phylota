@@ -351,15 +351,14 @@ sub _do_tnrs_search {
             die "Don't know how to continue";
         }
         
-	# try to fetch the retrieve URL. If this fails we can only return undef.
-        eval {
-	    my $result = _fetch_url($url);
-	    $obj = decode_json($result);
-	};
-	if ( $@ ) {
-	    $log->error("Couldn't get response for $name: $@");
-	    return;
-	}
+        # try to fetch the retrieve URL. If this fails we can only return undef.
+        if ( my $result = _fetch_url($url) ) {
+            $obj = decode_json($result);
+        }
+        else {
+            $log->error("No result for $name");
+            return;
+        }
     }    
 }
 
@@ -414,7 +413,7 @@ sub _fetch_url {
 	}
 	else {
 		$log->error($url . ' - ' . $response->status_line);
-		die $response->status_line;
+		return undef;
 	}	
 }
 
