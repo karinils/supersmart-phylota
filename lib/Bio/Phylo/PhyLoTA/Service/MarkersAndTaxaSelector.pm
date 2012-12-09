@@ -32,7 +32,7 @@ my $TNRS_URL      = $TNRS_BASE . 'submit';
 my $TNRS_RETRIEVE = $TNRS_BASE . 'retrieve/';
 
 # defaults for web service
-my $timeout = 60;
+my $timeout = 120;
 my $wait    = 5;
 
 # this is used to create other objects, i.e. projects and taxa
