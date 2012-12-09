@@ -147,6 +147,7 @@ else {
         my @seqs    = $sg->filter_seq_set($sg->get_sequences_for_cluster_object($cl));
         my $single  = $sg->single_cluster($cl);
         my $seed_gi = $single->seed_gi;
+		my $mrca    = $single->ti_root;
         $log->info("worker $rank fetched ".scalar(@seqs)." sequences");
         
         # keep only the sequences for our taxa
@@ -173,7 +174,7 @@ else {
                 my $gi  = $row->get_name;
                 my $ti  = $sg->find_seq($gi)->ti;
                 my $seq = $row->get_char;
-                push @matrix, [ ">gi|${gi}|seed_gi|${seed_gi}|taxon|${ti}" => $seq ];
+                push @matrix, [ ">gi|${gi}|seed_gi|${seed_gi}|taxon|${ti}|mrca|${mrca}" => $seq ];
             });
             push @result, { 'seed_gi' => $seed_gi, 'matrix' => \@matrix };
         }
