@@ -188,7 +188,7 @@ else {
 			
             push @result, {
 				'seed_gi' => $seed_gi,
-				'gene'    => $genes[0],
+				'gene'    => join('.',@genes),
 				'matrix'  => \@matrix,
 			};
         }
