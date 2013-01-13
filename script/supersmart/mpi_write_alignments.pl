@@ -57,10 +57,9 @@ if ( $rank == 0 ) {
     # the inclusiveness more evenly
     my @subset;
     for my $i ( 0 .. $#sorted_clusters ) {
-	my $j = $i % $nworkers;
-	$log->info($j);
-	$subset[$j] = [] if not $subset[$j];
-	push @{ $subset[$j] }, $sorted_clusters[$i];
+		my $j = $i % $nworkers;
+		$subset[$j] = [] if not $subset[$j];
+		push @{ $subset[$j] }, $sorted_clusters[$i];
     }
     
     # now we flatten the subsets again
@@ -81,40 +80,45 @@ if ( $rank == 0 ) {
     for my $worker ( 1 .. $nworkers ) {
         
         # first send over the map of nodes to keep
-	MPI_Send(\%ti,$worker,NODE_MAP,MPI_COMM_WORLD);
+		MPI_Send(\%ti,$worker,NODE_MAP,MPI_COMM_WORLD);
         
-	# the ending index of the subset is either the starting index + chunk size or the
-	# highest index in the array, whichever fits
-	my $end  = ( $start + $nclusters ) > $#clusters ? $#clusters : ( $start + $nclusters );
+		# the ending index of the subset is either the starting index + chunk size or the
+		# highest index in the array, whichever fits
+		my $end  = ( $start + $nclusters ) > $#clusters ? $#clusters : ( $start + $nclusters );
 	
-	# create subset
-	my @subset = @clusters[ $start .. $end ];
-	$log->info("dispatching ".scalar(@subset)." clusters (index: $start .. $end) to worker $worker");
-	MPI_Send(\@subset,$worker,CLUSTER_SUBSET,MPI_COMM_WORLD);
+		# create subset
+		my @subset = @clusters[ $start .. $end ];
+		$log->info("dispatching ".scalar(@subset)." clusters (index: $start .. $end) to worker $worker");
+		MPI_Send(\@subset,$worker,CLUSTER_SUBSET,MPI_COMM_WORLD);
 	
-	# increment starting index
-	$start += $nclusters + 1;
+		# increment starting index
+		$start += $nclusters + 1;
     }
     
     # iterate over workers to receive and write results
     my $i = 1;
     for my $worker ( 1 .. $nworkers ) {
 	
-	# get the result
-	my $result = MPI_Recv($worker,ALIGNMENTS_SUBSET,MPI_COMM_WORLD);
-	$log->info("received ".scalar(@{$result})." results from worker $worker");
+		# get the result
+		my $result = MPI_Recv($worker,ALIGNMENTS_SUBSET,MPI_COMM_WORLD);
+		$log->info("received ".scalar(@{$result})." results from worker $worker");
 	
-	# iterate over alignments
-	for my $alignment ( @{ $result } ) {
+		# iterate over alignments
+		for my $alignment ( @{ $result } ) {
             
             # create out file name
-	    my $outfile = $workdir . '/' . $alignment->{seed_gi} . '.fa';
+		    my $outfile = $workdir
+				. '/'
+				. $alignment->{seed_gi}
+				. '.'
+				. $alignment->{gene}
+				. '.fa';
             
             # print name to stdout so we can make a list of produced files
             print $outfile, "\n";
             
             # open write handle
-	    open my $outfh, '>', $outfile or die $!;
+		    open my $outfh, '>', $outfile or die $!;
 	    
             # iterate over rows in alignment
             for my $row ( @{ $alignment->{matrix} } ) {
@@ -124,7 +128,7 @@ if ( $rank == 0 ) {
             }
             
             $i++;
-	}
+		}
     }    
 }
 
@@ -176,7 +180,17 @@ else {
                 my $seq = $row->get_char;
                 push @matrix, [ ">gi|${gi}|seed_gi|${seed_gi}|taxon|${ti}|mrca|${mrca}" => $seq ];
             });
-            push @result, { 'seed_gi' => $seed_gi, 'matrix' => \@matrix };
+			
+			# fetch gene name, if any
+			my $features = $sg->search_feature( { 'gi' => $seed_gi } );
+			my @genes = grep { /\S/ } map { $_->gene } $features->all;
+			$log->info("Genes for $seed_gi => '@genes'");
+			
+            push @result, {
+				'seed_gi' => $seed_gi,
+				'gene'    => $genes[0],
+				'matrix'  => \@matrix,
+			};
         }
     }
     
