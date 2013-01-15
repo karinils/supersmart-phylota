@@ -151,7 +151,7 @@ else {
         my @seqs    = $sg->filter_seq_set($sg->get_sequences_for_cluster_object($cl));
         my $single  = $sg->single_cluster($cl);
         my $seed_gi = $single->seed_gi;
-		my $mrca    = $single->ti_root;
+		my $mrca    = $single->ti_root->ti;
         $log->info("worker $rank fetched ".scalar(@seqs)." sequences");
         
         # keep only the sequences for our taxa
