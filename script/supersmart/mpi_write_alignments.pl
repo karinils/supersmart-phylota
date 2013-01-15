@@ -184,11 +184,18 @@ else {
 			# fetch gene name, if any
 			my $features = $sg->search_feature( { 'gi' => $seed_gi } );
 			my @genes = grep { /\S/ } map { $_->gene } $features->all;
-			$log->info("Genes for $seed_gi => '@genes'");
+			$log->info("genes for $seed_gi => '@genes'");
+			
+			# write intermediate result
+			my $filename = $workdir . '/' . $seed_gi . '.' . join('.',@genes) . '.fa';
+			open my $fh, '>', $filename or die $!;
+			for my $row ( @matrix ) {
+				print $row->[0], "\n", $row->[1], "\n";
+			}
 			
             push @result, {
 				'seed_gi' => $seed_gi,
-				'gene'    => $genes[0],
+				'gene'    => join('.',@genes),
 				'matrix'  => \@matrix,
 			};
         }
