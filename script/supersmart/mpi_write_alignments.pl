@@ -190,7 +190,7 @@ else {
 			my $filename = $workdir . '/' . $seed_gi . '.' . join('.',@genes) . '.fa';
 			open my $fh, '>', $filename or die $!;
 			for my $row ( @matrix ) {
-				print $row->[0], "\n", $row->[1], "\n";
+				print $fh $row->[0], "\n", $row->[1], "\n";
 			}
 			
             push @result, {
