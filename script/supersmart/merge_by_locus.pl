@@ -10,7 +10,7 @@ use Bio::Phylo::Util::Logger ':levels';
 my $conf = Bio::Phylo::PhyLoTA::Config->new;
 
 # process command line arguments
-my $gaps = 5;
+my $gaps = 10;
 my $incr = 1.2;
 my $verbosity = WARN;
 my $locus = 'rbcL';
