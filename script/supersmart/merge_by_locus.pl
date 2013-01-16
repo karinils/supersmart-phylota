@@ -51,7 +51,7 @@ ALN: for my $aln ( @alignments ) {
     
     # maybe skip?
     if ( $g1 > $gaps ) {
-        $log->error("seed file $seed is too gappy already, can't continue");
+        $log->error("seed file $seed is too gappy already ($g1 > $gaps), can't continue");
         exit(1);
     }
     elsif ( $g2 > $gaps ) {
