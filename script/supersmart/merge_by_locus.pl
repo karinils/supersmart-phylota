@@ -2,6 +2,7 @@
 use strict;
 use warnings;
 use Getopt::Long;
+use List::Util 'sum';
 use Bio::Phylo::PhyLoTA::Config;
 use Bio::Phylo::Util::Logger ':levels';
 
@@ -81,9 +82,10 @@ ALN: for my $aln ( @alignments ) {
 
 sub length_and_gaps {
     my %fasta = @_;
-    my ($length) = map { length($_) } values %fasta;
-    my ($gaps) = sort { $b <=> $a } map { scalar split /-+/, $_ } values %fasta;
-    return $length, $gaps;
+    my ($length) = map { length($_) } values %fasta;    
+    my @gaps = map { scalar split /-+/, $_ } values %fasta;
+    my $average = sum(@gaps) / scalar(@gaps);
+    return $length, $average;
 }
 
 sub read_string {
