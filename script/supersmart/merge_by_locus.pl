@@ -55,7 +55,7 @@ ALN: for my $aln ( @alignments ) {
         exit(1);
     }
     elsif ( $g2 > $gaps ) {
-        $log->warn("alignment $aln is too gappy already, skipping");
+        $log->warn("alignment $aln is too gappy already ($g2 > $gaps), skipping");
         next ALN;
     }
     
