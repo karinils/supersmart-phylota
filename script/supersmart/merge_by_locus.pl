@@ -82,7 +82,7 @@ ALN: for my $aln ( @alignments ) {
 sub length_and_gaps {
     my %fasta = @_;
     my ($length) = map { length($_) } values %fasta;
-    my ($gaps) = sort { scalar(@$b) <=> scalar(@$a) } map { [ split /-+/, $_ ] } values %fasta;
+    my ($gaps) = sort { $b <=> $a } map { scalar split /-+/, $_ } values %fasta;
     return $length, $gaps;
 }
 
