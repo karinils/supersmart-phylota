@@ -12,7 +12,7 @@ print "$ntax $nchar\n";
 for my $defline ( keys %fasta ) {
 	if ( $defline =~ /taxon\|(\d+)/ ) {
 		my $name = $1;
-		print $name, ' ', $fasta{$defline}, "\n";
+		print $name, ' ' x ( 10 - length($name) ), $fasta{$defline}, "\n";
 	}
 }
 
