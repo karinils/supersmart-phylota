@@ -55,7 +55,7 @@ ALN: for my $aln ( @alignments ) {
         exit(1);
     }
     elsif ( $g2 > $gaps ) {
-        $log->warn("alignment $aln is too gappy already, skipping");
+        $log->warn("alignment $aln is too gappy already ($g2 > $gaps), skipping");
         next ALN;
     }
     
@@ -66,7 +66,7 @@ ALN: for my $aln ( @alignments ) {
     my ( $l3,$g3 ) = length_and_gaps( simple_fasta( $profile ) );
     my @lengths = sort { $a <=> $b } $l1, $l2;
     if ( $g3 > $gaps ) {
-        $log->warn("result of $seed and $aln became too gappy, skipping");
+        $log->warn("result of $seed and $aln became too gappy ($g3 > $gaps), skipping");
         next ALN;
     }
     elsif ( ( $l3 / $lengths[1] ) > $incr ) {
