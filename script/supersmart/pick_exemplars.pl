@@ -79,6 +79,7 @@ for my $genus ( keys %seqs_for_genus ) {
     for my $defline ( @{ $seqs_for_genus{$genus} } ) {
         my $seq = $fasta{$defline};
         $seq =~ s/-//g;
+	$seq =~ s/\?//g;
         if ( length($seq) > $length ) {
             $longest = $defline;
             $length  = length($seq);
