@@ -6,11 +6,11 @@ use Bio::Phylo::Util::Logger ':levels';
 
 # process command line arguments
 my $verbosity = WARN;
-my ( $list, $nexus );
+my ( $list, $format );
 GetOptions(
 	'list=s'   => \$list,
 	'verbose+' => \$verbosity,
-	'nexus'    => \$nexus,
+	'format=s' => \$format,
 );
 
 # instantiate helper objects
@@ -73,8 +73,13 @@ for my $file ( @list ) {
 }
 
 # write results
-if ( $nexus ) {
+if ( $format =~ /nexus/i ) {
 	write_nexus( $nchar, \%supermatrix, \%charset );
+}
+elsif ( $format =~ /fasta/i ) {
+	for my $key ( keys %supermatrix ) {
+		print '>taxon|', $key, "\n", $supermatrix{$key}, "\n";
+	}
 }
 else {
 	write_phylip( $nchar, \%supermatrix );
