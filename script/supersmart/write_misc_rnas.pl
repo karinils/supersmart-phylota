@@ -70,7 +70,7 @@ my @columns = (
 print join("\t", @columns), "\n";
 
 # start iterating over the records
-while ( my $seq = $reader->next_seq ) {
+SEQ: while ( my $seq = $reader->next_seq ) {
 	
 	# first check to see if the sequence is in the seqs table
 	my $gi = $seq->primary_id;
@@ -82,9 +82,10 @@ while ( my $seq = $reader->next_seq ) {
 			
 			# some types of features we should skip as they're useless
 			next FEATURE if $primary_tag ne 'misc_RNA';
-			
-			# this is going to be a pseudo object to write to file
+			next SEQ if not $feat->has_tag('product');
 			my ($product) = $feat->get_tag_values('product');
+			
+			# this is going to be a pseudo object to write to file			
 			my %feature = (
 				primary_tag => $primary_tag,
 				gi          => $gi,
