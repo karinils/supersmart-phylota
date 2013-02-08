@@ -27,11 +27,12 @@ Selects optimal set of taxa and markers based on #markers/sp, coverage on matrix
 =cut
 
 # URL for the taxonomic name resolution service
-my $TNRS_URL = 'http://api.phylotastic.org/tnrs/submit';
-my $TNRS_RETRIEVE = 'http://api.phylotastic.org/tnrs/retrieve/';
+my $TNRS_BASE     = 'http://taxosaurus.org/';
+my $TNRS_URL      = $TNRS_BASE . 'submit';
+my $TNRS_RETRIEVE = $TNRS_BASE . 'retrieve/';
 
 # defaults for web service
-my $timeout = 60;
+my $timeout = 120;
 my $wait    = 5;
 
 # this is used to create other objects, i.e. projects and taxa
@@ -110,40 +111,40 @@ sub get_nodes_for_table {
     
     # ...open from a file
     if ( $args{'-file'} ) {
-	open $fh, '<', $args{'-file'} or throw 'FileError' => $!;
-	$log->info("going to read column $i from file $args{'-file'}");
+        open $fh, '<', $args{'-file'} or throw 'FileError' => $!;
+        $log->info("going to read column $i from file $args{'-file'}");
     }
     
     # ...get passed in as an open handle
     elsif ( $args{'-handle'} ) {
-	$fh = $args{'-handle'};
-	$log->info("going to read column $i from handle");
+        $fh = $args{'-handle'};
+        $log->info("going to read column $i from handle");
     }
     
     # ...or disaster happens
     else {
-	throw 'BadArgs' => 'need either -file or -handle argument';
+        throw 'BadArgs' => 'need either -file or -handle argument';
     }
     
     # iterate over lines
     while(<$fh>) {
-	chomp;
-	my @fields = split /\t/, $_;
-	my $id = $fields[$i];
-	
-	# this will make us skip over any column headers and blank lines
-	if ( $id =~ /^\d+$/ ) {
-	    my $node = $self->find_node($id);
-	    
-	    # this *could* fail because perhaps the IDs have been found by TNRS
-	    # without being present in our local database
-	    if ( $node ) {
-		push @nodes, $node;
-	    }
-	    else {
-		$log->warn("couldn't instantiate node $id");
-	    }
-	}
+        chomp;
+        my @fields = split /\t/, $_;
+        my $id = $fields[$i];
+        
+        # this will make us skip over any column headers and blank lines
+        if ( $id =~ /^\d+$/ ) {
+            my $node = $self->find_node($id);
+            
+            # this *could* fail because perhaps the IDs have been found by TNRS
+            # without being present in our local database
+            if ( $node ) {
+                push @nodes, $node;
+            }
+            else {
+                $log->warn("couldn't instantiate node $id");
+            }
+        }
     }
     return @nodes;
 }
@@ -317,6 +318,7 @@ sub _do_tnrs_search {
     
     # do the request
     my $result = _fetch_url( $TNRS_URL . '?query=' . uri_escape( $name ) );
+    return if not $result;
     $log->debug("raw result: $result");
     my $obj = decode_json($result);
     $log->debug("parsed response: ".Dumper($obj));
@@ -350,8 +352,14 @@ sub _do_tnrs_search {
             die "Don't know how to continue";
         }
         
-        my $result = _fetch_url($url);
-        $obj = decode_json($result);            
+        # try to fetch the retrieve URL. If this fails we can only return undef.
+        if ( my $result = _fetch_url($url) ) {
+            $obj = decode_json($result);
+        }
+        else {
+            $log->error("No result for $name");
+            return;
+        }
     }    
 }
 
@@ -401,12 +409,12 @@ sub _fetch_url {
 	if ( $response->is_success or $response->code == 302 ) {
 		$log->info($response->status_line);
 		my $content = $response->decoded_content;
-        $log->info($content);
+		$log->info($content);
 		return $content;
 	}
 	else {
 		$log->error($url . ' - ' . $response->status_line);
-		die $response->status_line;
+		return undef;
 	}	
 }
 
