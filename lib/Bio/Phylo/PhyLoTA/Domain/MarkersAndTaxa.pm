@@ -10,6 +10,33 @@ sub new {
     return $self;
 }
 
+sub parse_fasta_file {
+    my ( $class, $file ) = @_;
+    open my $fh, '<', $file or die $!;
+    my $string = do { local $/; <$fh> };
+    return $class->parse_fasta_string($string);
+}
+
+sub parse_fasta_string {
+    my ( $class, $string ) = @_;
+    my @lines = split /\n/, $string;
+    my %fasta;
+    my $current;
+    for my $line ( @lines ) {
+        chomp $line;
+        if ( $line =~ /^>(.+)/ ) {
+            $current = $1;
+            if ( exists $fasta{$current} ) {
+                $fasta{$current} = '';
+            }            
+        }
+        else {
+            $fasta{$current} .= $line;
+        }
+    }
+    return %fasta;    
+}
+
 
 1;
 
