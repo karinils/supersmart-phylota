@@ -122,6 +122,22 @@ sub search_feature {
 	return $result;
 }
 
+sub single_feature {
+        my ( $self, $clause ) = @_;
+        my $result;
+        eval {
+              	$result = $schema->resultset('Feature')->single($clause);
+        };
+	if ( $@ ) {
+                throw 'BadArgs' => $@;
+        }
+	if ( not $result ) {
+                $logger->info("no result!");
+        }
+	return $result;
+}
+
+
 sub search_cluster {
 	my ( $self, $clause ) = @_;
 	my $result;
