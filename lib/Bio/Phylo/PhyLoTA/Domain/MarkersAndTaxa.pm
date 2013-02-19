@@ -37,6 +37,18 @@ sub parse_fasta_string {
     return %fasta;    
 }
 
+sub get_taxa_from_fasta {
+    my ( $class, %fasta ) = @_;
+    my @taxa;
+    for my $key ( keys %fasta ) {
+        if ( $key =~ /taxon\|(\d+)/ ) {
+            my $taxon = $1;
+            push @taxa, $taxon;
+        }
+    }
+    return @taxa;
+}
+
 
 1;
 
