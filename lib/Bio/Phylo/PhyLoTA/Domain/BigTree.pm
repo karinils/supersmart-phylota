@@ -4,6 +4,7 @@ package Bio::Phylo::PhyLoTA::Domain::BigTree;
 use strict;
 use warnings;
 use Cwd;
+use File::Copy;
 use File::Basename;
 use Bio::Phylo::PhyLoTA::Config;
 use Bio::Phylo::Util::Logger;
@@ -29,28 +30,43 @@ sub build_tree {
     my $seqfile_basename = basename($seqfile);
     my $treefile_basename = basename($treefile);
     
-    # there are optionally derived from the config file
+    # these are normally derived from the config file
     my $work_dir   = $args{'-work_dir'}   || $conf->WORK_DIR;
     my $examl_bin  = $args{'-examl_bin'}  || $conf->EXAML_BIN;
     my $parser_bin = $args{'-parser_bin'} || $conf->PARSER_BIN;
     my $examl_args = $args{'-examl_args'} || $conf->EXAML_ARGS;
     
     # create outfile from infile, if not provided
-    my $outfile = $args{'-outfile'} || "${seqfile}.dnd";
+    my $outfile = $args{'-outfile'} || "${seqfile_basename}.dnd";
     
     # first create the binary representation of the seq file, if it doesn't exist yet
-    if ( not -e "${work_dir}/${$seqfile_basename}.binary" ) {
+    if ( not -e "${work_dir}/${seqfile_basename}.binary" ) {
+        $log->info("going to create binary compressed alignment file ${work_dir}/${seqfile_basename}.binary");
         chdir $work_dir;
-        system( $parser_bin, '-s', $seqfile, '-n', "${$seqfile_basename}.binary", '-m', 'DNA' ) == 0 or throw 'BadArgs' => $?;
+        my $command = "$parser_bin -s $seqfile_basename -n $seqfile_basename -m DNA > /dev/null";
+        $log->info("going to run '$command'");
+        system( $command ) == 0 or throw 'BadArgs' => $?;
         chdir $cwd;
+    }
+    else {
+        $log->info("binary compressed alignment file ${work_dir}/${seqfile_basename}.binary already existed");
+    }
+    
+    # copy the starting tree to the working dir if it's not already there
+    if ( not -e "${work_dir}/${treefile_basename}" ) {
+        $log->info("copying $treefile to $work_dir");
+        copy( $treefile, "${work_dir}/${treefile_basename}" );
     }
     
     # now run the tree search
     {
         chdir $work_dir;
-        system( $examl_bin, $examl_args, '-s', "${$seqfile_basename}.binary", '-t', $treefile_basename, '-n', $outfile ) == 0 or throw 'BadArgs' => $?;
+        my $command = "$examl_bin $examl_args -s ${seqfile_basename}.binary -t $treefile_basename -n $outfile > /dev/null";
+        $log->info("going to run '$command'");
+        system( $command ) == 0 or throw 'BadArgs' => $?;
+        chdir $cwd;
     }
-    return $outfile;
+    return "$work_dir/ExaML_result.$outfile";
 }
 
 
