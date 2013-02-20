@@ -35,6 +35,8 @@ sub build_tree {
     my $examl_bin  = $args{'-examl_bin'}  || $conf->EXAML_BIN;
     my $parser_bin = $args{'-parser_bin'} || $conf->PARSER_BIN;
     my $examl_args = $args{'-examl_args'} || $conf->EXAML_ARGS;
+    my $mpirun_bin = $args{'-mpirun_bin'} || $conf->MPIRUN_BIN;
+    my $nodes      = $args{'-nodes'}      || $conf->NODES;
     
     # create outfile from infile, if not provided
     my $outfile = $args{'-outfile'} || "${seqfile_basename}.dnd";
@@ -61,7 +63,7 @@ sub build_tree {
     # now run the tree search
     {
         chdir $work_dir;
-        my $command = "$examl_bin $examl_args -s ${seqfile_basename}.binary -t $treefile_basename -n $outfile > /dev/null";
+        my $command = "$mpirun_bin -np $nodes $examl_bin $examl_args -s ${seqfile_basename}.binary -t $treefile_basename -n $outfile > /dev/null";
         $log->info("going to run '$command'");
         system( $command ) == 0 or throw 'BadArgs' => $?;
         chdir $cwd;
