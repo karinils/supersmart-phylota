@@ -1,5 +1,6 @@
 *.gz
 *.dmp
+*.tsv
 Makefile
 *.komodoproject
 data/GBIF/taxonomy-search-*
